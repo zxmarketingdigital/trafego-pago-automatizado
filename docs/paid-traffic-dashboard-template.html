@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!--__TITLE__--></title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #111111;
+    --panel-2: #181818;
+    --border: #262626;
+    --text: #e5e5e5;
+    --muted: #9ca3af;
+    --accent: #fbbf24;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --gray: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font-size: 14px; line-height: 1.5;
+  }
+  header {
+    padding: 28px 40px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 22px; color: var(--accent); font-weight: 600; }
+  header .meta { color: var(--muted); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; padding: 14px 40px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .tab { padding: 8px 14px; border: 1px solid var(--border); border-bottom: none; border-radius: 8px 8px 0 0;
+         background: var(--panel); color: var(--muted); text-decoration: none; font-size: 13px; }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--panel-2); color: var(--accent); border-color: var(--accent); }
+  main { padding: 28px 40px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .kpi-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px;
+  }
+  .kpi-card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+  .kpi-card .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi-card.green .value, .delta.green { color: var(--green); }
+  .kpi-card.yellow .value, .delta.yellow { color: var(--yellow); }
+  .kpi-card.red .value, .delta.red { color: var(--red); }
+  .kpi-card.gray .value, .delta.gray { color: var(--gray); }
+  .delta { font-weight: 600; font-size: 12px; }
+
+  .toolbar {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 14px;
+    flex-wrap: wrap; justify-content: space-between;
+  }
+  .btn {
+    background: var(--panel-2); color: var(--accent); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--accent); }
+
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+  table { width: 100%; min-width: 720px; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { background: var(--panel-2); color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  details { margin: 6px 0; }
+  details summary { cursor: pointer; padding: 8px 12px; background: var(--panel-2); border-radius: 8px; user-select: none; }
+  details summary:hover { background: #1f1f1f; }
+  details[open] summary { border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; }
+  .nested { padding-left: 24px; margin-top: 6px; }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge.SCALE { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid var(--green); }
+  .badge.KILL  { background: rgba(239,68,68,.15);  color: var(--red);   border: 1px solid var(--red);   }
+  .badge.KEEP  { background: rgba(245,158,11,.15); color: var(--yellow);border: 1px solid var(--yellow);}
+  .badge.KEEP-amostra { background: #1f2937; color: var(--gray); border: 1px solid var(--border); }
+
+  .empty { text-align: center; padding: 60px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📊 Tráfego Pago Meta ADS</h1>
+    <div class="meta"><!--__GENERATED_AT__--></div>
+  </div>
+  <div class="meta" id="account"></div>
+</header>
+
+<nav class="tabs" id="tabs"></nav>
+
+<main>
+  <div class="toolbar">
+    <div id="primaryHint" class="meta"></div>
+    <button class="btn" onclick="location.reload()">↻ Recarregar</button>
+  </div>
+  <section class="kpi-row" id="kpiRow"></section>
+  <section id="campaigns"></section>
+</main>
+
+<script>
+/*__JSON_DATA__*/
+
+(function () {
+  const data = window.PAID_TRAFFIC_DATA;
+  if (!data) {
+    document.getElementById('campaigns').innerHTML = '<div class="empty">Sem dados — rode meta-metrics-fetcher.</div>';
+    return;
+  }
+
+  document.getElementById('account').textContent = `Conta: ${data.ad_account_id} · Spend total: R$${(data.spend_total||0).toFixed(2)}`;
+
+  const primary = data.primary_kpi;
+  const primaryMeta = (data.kpis_summary[primary] || {});
+  document.getElementById('primaryHint').textContent = `KPI primário: ${primary.toUpperCase()} (meta ${formatTarget(primary, primaryMeta.target)})`;
+
+  // Tabs (links para os outros windows)
+  const winList = [4, 7, 14, 30];
+  const tabs = winList.map(w => {
+    const active = (w === data.window_days) ? 'active' : '';
+    return `<a class="tab ${active}" href="paid-traffic-dashboard-${w}d.html">Janela ${w}d</a>`;
+  }).join('');
+  document.getElementById('tabs').innerHTML = tabs;
+
+  // KPI cards
+  const kpiHtml = data.perfil_kpis.map(key => {
+    const k = data.kpis_summary[key];
+    if (!k) return '';
+    const status = k.status || 'gray';
+    const valStr = k.value === null ? '—' : formatValue(key, k.value);
+    const tgtStr = formatTarget(key, k.target);
+    const deltaStr = k.delta_pct === null ? '' :
+      `<span class="delta ${status}">${k.delta_pct > 0 ? '+' : ''}${k.delta_pct}%</span> vs meta`;
+    return `<div class="kpi-card ${status}">
+      <div class="label">${labelFor(key)}</div>
+      <div class="value">${valStr}</div>
+      <div class="meta">meta ${tgtStr} · ${deltaStr}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('kpiRow').innerHTML = kpiHtml;
+
+  // Campaigns
+  if (!data.campaigns || data.campaigns.length === 0) {
+    document.getElementById('campaigns').innerHTML = '<div class="empty">Sem campanhas ativas na janela.</div>';
+    return;
+  }
+
+  const sortedCamps = [...data.campaigns].sort((a, b) => b.spend - a.spend);
+  const html = sortedCamps.map(c => renderCampaign(c, data.perfil_kpis)).join('');
+  document.getElementById('campaigns').innerHTML = html;
+
+  function renderCampaign(c, kpis) {
+    const adsetsHtml = c.adsets.sort((a,b)=>b.spend-a.spend).map(as => renderAdset(as, kpis)).join('');
+    const metricsCells = kpis.map(k => `<span style="margin-right:14px;color:var(--muted)">${k.toUpperCase()}: <b style="color:var(--text)">${formatValue(k, c.metrics[k])}</b></span>`).join('');
+    return `<details>
+      <summary>
+        <span class="badge ${c.decide}">${c.decide}</span>
+        <b>${escapeHtml(c.name)}</b>
+        <span style="color:var(--muted)">· ${c.objective || ''}</span>
+        <span style="float:right">R$${c.spend.toFixed(2)} · ${metricsCells}</span>
+      </summary>
+      <div class="nested">${adsetsHtml}</div>
+    </details>`;
+  }
+
+  function renderAdset(as, kpis) {
+    const adsHtml = renderAdsTable(as.ads, kpis);
+    return `<details>
+      <summary><b>${escapeHtml(as.name)}</b> <span style="float:right;color:var(--muted)">R$${as.spend.toFixed(2)}</span></summary>
+      <div class="nested">${adsHtml}</div>
+    </details>`;
+  }
+
+  function renderAdsTable(ads, kpis) {
+    const sorted = [...ads].sort((a,b)=>b.spend-a.spend);
+    const headers = `<tr><th>Decisão</th><th>Anúncio</th><th class="num">Spend</th>${kpis.map(k=>`<th class="num">${k.toUpperCase()}</th>`).join('')}<th>Razão</th></tr>`;
+    const rows = sorted.map(a => `<tr>
+      <td><span class="badge ${a.decide}">${a.decide}</span></td>
+      <td>${escapeHtml(a.ad_name)}</td>
+      <td class="num">R$${a.spend.toFixed(2)}</td>
+      ${kpis.map(k=>`<td class="num">${formatValue(k, a.metrics[k])}</td>`).join('')}
+      <td style="color:var(--muted);font-size:12px">${escapeHtml(a.decide_reason || '')}</td>
+    </tr>`).join('');
+    return `<div class="table-wrap"><table>${headers}${rows}</table></div>`;
+  }
+
+  function formatValue(key, v) {
+    if (v === null || v === undefined) return '—';
+    if (key === 'ctr' || key === 'frequency') return Number(v).toFixed(2) + (key==='ctr'?'%':'');
+    if (key === 'roas') return Number(v).toFixed(2) + 'x';
+    return 'R$' + Number(v).toFixed(2);
+  }
+  function formatTarget(key, t) {
+    if (t === null || t === undefined) return '—';
+    if (key === 'ctr') return Number(t).toFixed(2) + '%';
+    if (key === 'roas') return Number(t).toFixed(2) + 'x';
+    if (key === 'frequency') return Number(t).toFixed(2);
+    return 'R$' + Number(t).toFixed(2);
+  }
+  function labelFor(key) {
+    const m = {cpl:'CPL', cpa:'CPA', roas:'ROAS', cost_per_msg:'Custo/Msg', cpm:'CPM', ctr:'CTR', cpc:'CPC', frequency:'Frequência', cost_per_install:'Custo/Install'};
+    return m[key] || key.toUpperCase();
+  }
+  function escapeHtml(s) {
+    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+name: Validar Setup
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: zxmarketingdigital/setup-ci@v1

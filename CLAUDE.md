@@ -7,7 +7,7 @@
 >
 > Ao final desta sessão você terá:
 > - MCP oficial do Meta conectado (criar campanhas, ler insights e ajustar budget direto pelo chat)
-> - 5 skills especialistas + 1 agente orquestrador para tráfego pago
+> - 8 skills especialistas + 1 agente orquestrador para tráfego pago
 > - Dashboard local com SUAS métricas e SUAS metas, atualizando 3x/dia automaticamente
 > - Estratégia de decisão (escalar/matar/manter) personalizada para o seu modelo de campanha
 >
@@ -169,7 +169,7 @@ Pronto para a Etapa 3?"
 `[███░░░░░░░] Etapa 3 de 10`
 
 ### O que e
-Copia 5 skills especialistas + 1 agente orquestrador para `~/.claude/skills/`.
+Copia 8 skills especialistas + 1 agente orquestrador para `~/.claude/skills/`.
 
 ### Para que serve
 Habilita comandos diretos no chat: criar campanha, gerar briefing, atualizar metricas, analisar performance, otimizar budget.
@@ -184,12 +184,12 @@ Voce digita o trigger no chat (ex: "criar campanha de lead") e a skill correta e
 Execute: `python3 setup/setup_skills.py`
 
 O script vai:
-- Copiar 6 pastas de `skills/` para `~/.claude/skills/`
-- Validar com `ls ~/.claude/skills/ | grep -E "meta-|agente-trafego"` (deve retornar 6)
+- Copiar 9 pastas de `skills/` para `~/.claude/skills/`
+- Validar com `ls ~/.claude/skills/ | grep -E "meta-|agente-trafego"` (deve retornar 9)
 
 Apos o script:
 
-"6 skills instaladas:
+"9 skills instaladas:
 
 /agente-trafego-pago        menu orquestrador
 /meta-campaign-launcher     criar campanhas
@@ -197,6 +197,9 @@ Apos o script:
 /meta-metrics-fetcher       atualizar metricas
 /meta-performance-analyzer  analise da semana
 /meta-budget-optimizer      plano de realocacao
+/meta-capi-setup            configurar CAPI (bônus)
+/meta-relatorio-email       relatório diário por e-mail (bônus)
+/meta-relatorio-whatsapp    relatório diário no WhatsApp (bônus)
 
 Pronto para a Etapa 4?"
 
@@ -493,7 +496,7 @@ Setup 6 concluido!
 
 O que voce tem agora:
 - MCP oficial Meta conectado a conta {ad_account_id}
-- 6 skills instaladas (5 especialistas + 1 agente orquestrador)
+- 9 skills instaladas (8 especialistas + 1 agente orquestrador)
 - Dashboard rodando em http://localhost:8888 (atualiza 8h/13h/19h)
 - Estrategia decide() ativa nos KPIs: {kpis_lista}
 - Metas configuradas: {metas_resumo}
@@ -505,6 +508,11 @@ Comandos do dia a dia:
 /meta-metrics-fetcher       atualizar dashboard agora
 /meta-performance-analyzer  analise da semana
 /meta-budget-optimizer      plano de realocacao
+
+Bonus (instalacao opcional, cada um no seu proprio tempo):
+/meta-capi-setup            rastreamento server-side (CAPI) ponta a ponta
+/meta-relatorio-email       resumo diario da operacao no seu e-mail
+/meta-relatorio-whatsapp    o mesmo resumo, no WhatsApp
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Voce acabou de plugar trafego pago direto no Claude Code.

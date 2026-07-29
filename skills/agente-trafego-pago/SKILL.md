@@ -36,6 +36,11 @@ Escolha uma opção:
   6. Abrir dashboard no browser
   7. Ajustar perfil/metas
   8. Ver status geral (KPIs vs metas)
+
+  ── Bônus ──
+  9. Configurar CAPI (rastreamento server-side)
+ 10. Receber o relatório diário por e-mail
+ 11. Receber o relatório diário no WhatsApp
 ```
 
 ## Roteamento
@@ -48,6 +53,9 @@ Escolha uma opção:
 | 4 | Invocar skill `meta-performance-analyzer` |
 | 5 | Invocar skill `meta-budget-optimizer` |
 | 6 | Rodar `open http://localhost:8888/paid-traffic-dashboard-7d.html` (macOS) ou equivalente |
+| 9 | Invocar skill `meta-capi-setup` |
+| 10 | Invocar skill `meta-relatorio-email` |
+| 11 | Invocar skill `meta-relatorio-whatsapp` |
 | 7 | Rodar `python3 ~/zx-control-trafego-pago/setup/setup_perfil_campanhas.py` para regravar `meta_perfil.json` |
 | 8 | Ler `paid-traffic-7d.json`, formatar `kpis_summary` em tabela com status verde/amarelo/vermelho |
 

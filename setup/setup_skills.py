@@ -29,6 +29,12 @@ EXPECTED = [
     "meta-metrics-fetcher",
     "meta-performance-analyzer",
     "meta-budget-optimizer",
+    # Bônus. Precisam estar aqui: é esta lista que copia a skill para
+    # ~/.claude/skills/. Sem isso o arquivo existe no repo mas o comando não
+    # existe no Claude Code de quem clonou.
+    "meta-capi-setup",
+    "meta-relatorio-email",
+    "meta-relatorio-whatsapp",
 ]
 
 

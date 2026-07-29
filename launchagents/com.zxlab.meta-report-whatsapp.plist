@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.zxlab.meta-report-whatsapp</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{PYTHON}</string>
+    <string>{HOME}/.operacao-ia/scripts/meta/send_whatsapp_report.py</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key><integer>8</integer>
+      <key>Minute</key><integer>20</integer>
+    </dict>
+  </array>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>{HOME}/.operacao-ia/logs/meta-report-whatsapp.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>{HOME}/.operacao-ia/logs/meta-report-whatsapp.stderr.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+    <key>PYTHON_BIN</key>
+    <string>{PYTHON}</string>
+  </dict>
+</dict>
+</plist>

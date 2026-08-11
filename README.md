@@ -6,7 +6,7 @@ Conecte seu gerenciador de anúncios do Meta ao Claude Code e automatize a opera
 
 - macOS (recomendado) ou Windows via WSL2 (Windows Subsystem for Linux — ver "Limitações conhecidas" abaixo para o agendamento). Linux nativo também funciona.
 - Python 3.9+
-- Claude Code com MCP oficial Meta disponível (`mcp__meta-official__*`)
+- Claude Code com MCP oficial Meta disponível (`mcp__meta-official__*`, endereço `mcp.facebook.com/ads`) — a Etapa 1 do setup conecta por OAuth automaticamente
 - Conta Meta Business + Ad Account ativa
 
 ## Instalação

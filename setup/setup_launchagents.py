@@ -117,7 +117,14 @@ def install_plist(name, home, python):
 def main():
     if platform.system() != "Darwin":
         print(f"⚠️  LaunchAgents é macOS-only. Você está em {platform.system()}.")
-        print("   Pule esta etapa. No Linux/Windows, use cron ou Task Scheduler manualmente.")
+        print("   Pule esta etapa e agende os 2 jobs por cron (Linux ou Windows via WSL2):")
+        print()
+        print(f"   5 8,13,19 * * * /bin/bash {Path.home()}/.operacao-ia/scripts/meta/run_fetch.sh")
+        print(f"   @reboot /bin/bash {Path.home()}/.operacao-ia/scripts/meta/start_dashboard.sh")
+        print()
+        print("   (rode 'crontab -e' e cole as 2 linhas acima). No Windows sem WSL2 não há")
+        print("   como agendar automaticamente — os scripts são bash; instale o WSL2")
+        print("   ('wsl --install' no PowerShell como admin) e rode o setup dentro dele.")
         sys.exit(0)
 
     plists_to_install = list(PLISTS)

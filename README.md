@@ -4,7 +4,7 @@ Conecte seu gerenciador de anúncios do Meta ao Claude Code e automatize a opera
 
 ## Pré-requisitos
 
-- macOS (Linux/Windows funcionam parcialmente — sem LaunchAgents)
+- macOS (recomendado) ou Windows via WSL2 (Windows Subsystem for Linux — ver "Limitações conhecidas" abaixo para o agendamento). Linux nativo também funciona.
 - Python 3.9+
 - Claude Code com MCP oficial Meta disponível (`mcp__meta-official__*`)
 - Conta Meta Business + Ad Account ativa
@@ -61,7 +61,12 @@ zx-control-trafego-pago/
 ## Limitações conhecidas
 
 - **MCP oficial Meta com rollout gradual**: nem toda conta tem `is_ads_mcp_enabled=true`. Setup detecta e oferece fallback via System User Token (`setup_meta_oauth.py --renew`).
-- **LaunchAgents só macOS**: Linux/Windows precisam de cron/Task Scheduler manual. Etapa 9 detecta SO e pula automaticamente.
+- **LaunchAgents só macOS**: Linux/Windows precisam de cron manual. Etapa 9 detecta SO e pula automaticamente. **No Windows, use WSL2** (Windows Subsystem for Linux — `wsl --install` no PowerShell como admin, depois rode todo o setup dentro do WSL2 como se fosse Linux). Dentro do WSL2, agende os dois jobs com `crontab -e`:
+  ```
+  5 8,13,19 * * * /bin/bash $HOME/.operacao-ia/scripts/meta/run_fetch.sh >> $HOME/.operacao-ia/logs/meta-fetch.cron.log 2>&1
+  @reboot /bin/bash $HOME/.operacao-ia/scripts/meta/start_dashboard.sh
+  ```
+  O `@reboot` só dispara quando o WSL2 é iniciado (não junto com o Windows) — se preferir o dashboard sempre no ar, rode `bash ~/.operacao-ia/scripts/meta/start_dashboard.sh &` manualmente após abrir o WSL2, ou crie uma Tarefa Básica no Windows Task Scheduler que execute `wsl bash ~/.operacao-ia/scripts/meta/start_dashboard.sh` no logon.
 - **Pixel ZX LAB hardcoded em demo**: aluno deve substituir pelo pixel próprio em E1 — setup pergunta.
 - **Conflito com creative-roas-dashboard**: se aluno tem outro fetcher Meta rodando, E9 detecta e oferece pular meta-fetch.plist (evita duplicar chamadas API).
 - **Decide() exige amostra ≥1.2× da meta**: ads com gasto baixo aparecem como "amostra insuficiente". Espere 24-72h pra acumular dados antes de decidir.

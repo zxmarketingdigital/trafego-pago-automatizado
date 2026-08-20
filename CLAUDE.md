@@ -150,6 +150,8 @@ O script vai perguntar:
 
 Salva em `~/.operacao-ia/config/meta_perfil.json`. Mostra resumo visual para confirmar.
 
+> ⚠️ **Se o aluno gerencia mais de uma conta de anúncios**, avise antes de prosseguir: este setup é para **1 conta por instalação** — `META_AD_ACCOUNT_ID`, o perfil e os dados do dashboard (`~/.operacao-ia/dashboards/`) ficam num caminho global (`~/.operacao-ia/`), não isolado por conta. Trocar de conta (`setup_meta_oauth.py --set-account`) sobrescreve os dados da conta anterior no próximo fetch — não há isolamento nativo hoje. Se ele precisa gerenciar 2+ contas, oriente a falar com o suporte antes de continuar em vez de tentar rodar uma segunda vez na mesma máquina.
+
 Apos o script:
 
 "Perfil configurado!

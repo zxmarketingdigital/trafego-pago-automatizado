@@ -72,6 +72,7 @@ zx-control-trafego-pago/
 - **Decide() exige amostra ≥1.2× da meta**: ads com gasto baixo aparecem como "amostra insuficiente". Espere 24-72h pra acumular dados antes de decidir.
 - **Token Meta persiste em `~/.operacao-ia/config/meta.env` (chmod 600)**: System User Tokens não expiram automaticamente. Se token for invalidado (troca de senha, desautorização), rode `python3 setup/setup_meta_oauth.py --renew`.
 - **Uninstall disponível**: `python3 setup/setup_uninstall.py` reverte o setup. Opção [A] preserva skills, [B] remove tudo.
+- **1 conta de anúncio por instalação**: `META_AD_ACCOUNT_ID`, o perfil (`~/.operacao-ia/config/meta_perfil.json`) e os dados do dashboard (`~/.operacao-ia/dashboards/paid-traffic-*.json`) são **globais na sua máquina**, não isolados por conta — trocar de conta com `setup_meta_oauth.py --set-account` faz o dashboard passar a mostrar a conta nova, e os arquivos da conta anterior são sobrescritos no próximo fetch. Se você gerencia **mais de uma conta de anúncios** (comum pra quem tem agência ou mais de um negócio), fale com o suporte (https://suporte.zxlab.com.br/hub) antes de rodar o setup numa segunda conta — hoje não existe isolamento nativo entre contas na mesma máquina.
 
 ## Suporte
 

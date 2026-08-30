@@ -23,9 +23,14 @@ def read_ad_account():
     return "(não configurado)"
 
 
-def fmt_target(k):
+CURRENCY_SYMBOLS = {"BRL": "R$", "EUR": "€", "USD": "$", "GBP": "£"}
+
+
+def fmt_target(k, currency="BRL"):
+    currency = str(currency or "BRL").strip().upper()
     if k["format"] == "currency":
-        return f"R${k['target']}"
+        symbol = CURRENCY_SYMBOLS.get(currency, currency + " ")
+        return f"{symbol}{k['target']}"
     if k["format"] == "percent":
         return f"{k['target']}%"
     return f"{k['target']}"
@@ -46,8 +51,9 @@ def main():
 
     perfil = json.loads(PERFIL.read_text())
     ad_account = read_ad_account()
+    currency = perfil.get("currency") or "BRL"
     kpis_lista = ", ".join(k["key"] for k in perfil["kpis"])
-    metas_resumo = " | ".join(f"{k['label']} {fmt_target(k)}" for k in perfil["kpis"])
+    metas_resumo = " | ".join(f"{k['label']} {fmt_target(k, currency)}" for k in perfil["kpis"])
 
     url = "http://localhost:8888/paid-traffic-dashboard-7d.html"
     try:

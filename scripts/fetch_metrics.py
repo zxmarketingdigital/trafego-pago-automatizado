@@ -65,10 +65,10 @@ PURCHASE_VALUE_TYPES = ACTION_TYPES["purchases"]
 
 
 def log(msg):
-    LOG.parent.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(BRT).isoformat(timespec="seconds")
-    line = f"[{ts}] {msg}\n"
     try:
+        LOG.parent.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(BRT).isoformat(timespec="seconds")
+        line = f"[{ts}] {msg}\n"
         with LOG.open("a") as f:
             f.write(line)
     except Exception:
@@ -229,11 +229,19 @@ CUR = "R$"  # símbolo da moeda da conta; atualizado em main() via Graph API
 
 
 def fetch_account_currency(account_id, token):
-    """Busca a moeda da conta (ex: EUR, BRL). Fallback: BRL."""
+    """Busca a moeda da conta (ex: EUR, BRL). Fallback: BRL — nunca aborta o fetch."""
     try:
         data = graph_get(account_id, {"fields": "currency"}, token)
         return data.get("currency") or "BRL"
-    except Exception:
+    except Exception as e:
+        reason = " ".join(str(e).split()) or "motivo desconhecido"
+        print(f"⚠️  Não foi possível confirmar a moeda da conta ({reason}) — usando BRL como padrão.")
+        log_fn = globals().get("log")
+        if callable(log_fn):
+            try:
+                log_fn(f"fetch_account_currency fallback BRL: {reason}")
+            except Exception:
+                pass
         return "BRL"
 
 

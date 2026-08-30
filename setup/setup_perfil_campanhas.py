@@ -25,10 +25,15 @@ import json
 import os
 import sys
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 OPERACAO = Path.home() / ".operacao-ia"
 PERFIL = OPERACAO / "config" / "meta_perfil.json"
 META_ENV = OPERACAO / "config" / "meta.env"
+GRAPH_BASE = "https://graph.facebook.com/v21.0"
+CURRENCY_SYMBOLS = {"BRL": "R$", "EUR": "€", "USD": "$", "GBP": "£"}
 
 OBJECTIVES = [
     ("LEAD_GENERATION", "Geração de Lead (form Meta ou redirect site)"),
@@ -113,12 +118,61 @@ def validate_perfil(perfil):
 
 # ────────────────────────────── Helpers ────────────────────────────────
 
-def read_ad_account():
+def read_env(key):
     if META_ENV.exists():
         for line in META_ENV.read_text().splitlines():
-            if line.startswith("META_AD_ACCOUNT_ID="):
+            if line.startswith(f"{key}="):
                 return line.split("=", 1)[1].strip()
     return ""
+
+
+def read_ad_account():
+    return read_env("META_AD_ACCOUNT_ID")
+
+
+def read_token():
+    """Lê access_token de meta.env (fonte de verdade) ou env var."""
+    return read_env("META_ACCESS_TOKEN") or os.environ.get("META_ACCESS_TOKEN") or None
+
+
+def graph_get(path, params, token):
+    """GET no Graph API com Authorization: Bearer (não na query string)."""
+    headers = {
+        "User-Agent": "zx-control-trafego-pago/0.1.1",
+        "Authorization": f"Bearer {token}",
+    }
+    url = f"{GRAPH_BASE}/{path.lstrip('/')}?{urlencode(params)}"
+    req = Request(url, headers=headers)
+    try:
+        with urlopen(req, timeout=60) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except HTTPError as e:
+        body = e.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"Graph API {e.code}: {body[:300]}")
+
+
+def resolve_account_currency(account_id=""):
+    """Busca a moeda da conta via Graph API. Fallback BRL — nunca aborta."""
+    account_id = str(account_id or "").strip()
+    if not account_id or "XXXXX" in account_id:
+        print("⚠️  Sem conta de anúncios configurada — usando BRL.")
+        return "BRL"
+    token = read_token()
+    if not token:
+        print("⚠️  Sem token Meta — usando BRL.")
+        return "BRL"
+    try:
+        data = graph_get(account_id, {"fields": "currency"}, token)
+        if not isinstance(data, dict):
+            raise ValueError("resposta Graph não é um objeto JSON")
+        currency = data.get("currency")
+        if not isinstance(currency, str) or not currency.strip():
+            raise ValueError("resposta Graph não trouxe currency")
+        return currency.strip().upper()
+    except Exception as e:
+        msg = " ".join(str(e).split()) or "motivo desconhecido"
+        print(f"⚠️  Não foi possível ler a moeda da conta ({msg}) — usando BRL.")
+        return "BRL"
 
 
 def normalize(perfil):
@@ -148,8 +202,10 @@ def show_summary(perfil):
     print(f"\n📌 Conta: {perfil.get('ad_account_id') or '(preenche depois)'}")
     print(f"📌 Objetivos: {', '.join(perfil['objectives'])}")
     print(f"\n📊 KPIs configurados:")
+    currency = str(perfil.get("currency") or "BRL").strip().upper()
+    symbol = CURRENCY_SYMBOLS.get(currency, f"{currency} ")
     for k in perfil["kpis"]:
-        meta_fmt = (f"R${k['target']}" if k['format']=='currency'
+        meta_fmt = (f"{symbol}{k['target']}" if k['format']=='currency'
                     else (f"{k['target']}%" if k['format']=='percent' else f"{k['target']}"))
         print(f"   • {k['label']:30s} meta {meta_fmt:>10s}  scale@{k['scale_at']}  kill@{k['kill_at']}")
     print(f"\n🎯 KPI primário: {perfil['primary_kpi']}")
@@ -329,6 +385,8 @@ def run_interactive():
         "ad_account_id": read_ad_account(),
     }
     perfil = normalize(perfil)
+    # Moeda da conta (Graph API). Mesmo se o JSON já trouxer currency, usa a da conta.
+    perfil["currency"] = resolve_account_currency(perfil.get("ad_account_id"))
     ok, errs = validate_perfil(perfil)
     if not ok:
         print("\n❌ Perfil inválido:")
@@ -367,6 +425,8 @@ def cmd_apply(path):
     except Exception as e:
         print(f"❌ JSON inválido: {e}"); return 1
     perfil = normalize(data)
+    # Moeda da conta (Graph API). Mesmo se o JSON já trouxer currency, usa a da conta.
+    perfil["currency"] = resolve_account_currency(perfil.get("ad_account_id"))
     ok, errs = validate_perfil(perfil)
     if not ok:
         print("\n❌ Perfil inválido:")

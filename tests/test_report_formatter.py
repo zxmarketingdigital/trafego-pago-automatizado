@@ -25,6 +25,13 @@ class ReportFormatterTest(unittest.TestCase):
         self.assertEqual(format_metric(3.95, "percent"), "3,95%")
         self.assertEqual(format_metric(3.53, "ratio"), "3,53")
 
+    def test_format_metric_currency_by_currency_code(self):
+        self.assertEqual(format_metric(12.34, "currency", "BRL"), "R$ 12,34")
+        self.assertEqual(format_metric(1234.5, "currency", "EUR"), "€ 1.234,50")
+        self.assertEqual(format_metric(1234.5, "currency", "USD"), "$ 1,234.50")
+        self.assertEqual(format_metric(1234.5, "currency", "GBP"), "£ 1,234.50")
+        self.assertEqual(format_metric(1234.5, "currency", "JPY"), "JPY 1,234.50")
+
     def test_kpi_direction_respects_higher_and_lower(self):
         self.assertIn(
             "direção favorável", describe_kpi_direction(2.0, 1.5, "higher")

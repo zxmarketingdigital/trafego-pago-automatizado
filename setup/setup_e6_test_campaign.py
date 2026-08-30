@@ -49,7 +49,13 @@ def main():
     objectives = perfil.get("objectives", [])
     primary_objective = objectives[0] if objectives else "LEAD_GENERATION"
     ad_account = perfil.get("ad_account_id") or read_env("META_AD_ACCOUNT_ID")
+    currency = str(perfil.get("currency") or "BRL").strip().upper()
     today = datetime.now().strftime("%Y-%m-%d")
+
+    if currency == "BRL":
+        budget_line = "R$10/dia ABO  (mínimo Meta)"
+    else:
+        budget_line = f"o mínimo diário da sua moeda ({currency}) — a Meta valida no lançamento"
 
     print("🧪 Etapa 6 — Test Campaign Run")
     print("=" * 60)
@@ -60,7 +66,7 @@ def main():
     print()
     print(f"  Nome:       [DEMO Setup6] {today}")
     print(f"  Objetivo:   {primary_objective}  (do perfil do aluno)")
-    print(f"  Budget:     R$10/dia ABO  (mínimo Meta)")
+    print(f"  Budget:     {budget_line}")
     print(f"  Audiência:  BR 25-55 placeholder (interesse 'marketing digital')")
     print(f"  Pixel:      auto-detectado (lookup de /act_<id>/adspixels)")
     print(f"  Página FB:  auto-detectada (lookup de /me/businesses)")

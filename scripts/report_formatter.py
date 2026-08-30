@@ -48,12 +48,27 @@ def format_number_br(value: Any, decimals: int = 2) -> str:
     return rendered.replace(",", "\0").replace(".", ",").replace("\0", ".")
 
 
+def format_number_for_currency(value: Any, currency: str, decimals: int = 2) -> str:
+    """Vírgula decimal para BRL/EUR; ponto decimal para USD/GBP/moeda desconhecida."""
+    if value is None:
+        return "—"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "—"
+    if currency in ("BRL", "EUR"):
+        return format_number_br(number, decimals)
+    return f"{number:,.{decimals}f}"
+
+
 def format_metric(value: Any, format_name: str, currency: str = "BRL") -> str:
     if value is None:
         return "—"
     if format_name == "currency":
-        prefix = {"BRL": "R$ ", "EUR": "€ ", "USD": "$ ", "GBP": "£ "}.get(currency, f"{currency} ")
-        return prefix + format_number_br(value)
+        prefix = {"BRL": "R$ ", "EUR": "€ ", "USD": "$ ", "GBP": "£ "}.get(
+            currency, f"{currency} "
+        )
+        return prefix + format_number_for_currency(value, currency)
     if format_name == "percent":
         return format_number_br(value) + "%"
     return format_number_br(value)

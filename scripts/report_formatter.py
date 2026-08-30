@@ -52,7 +52,7 @@ def format_metric(value: Any, format_name: str, currency: str = "BRL") -> str:
     if value is None:
         return "—"
     if format_name == "currency":
-        prefix = "R$ " if currency == "BRL" else f"{currency} "
+        prefix = {"BRL": "R$ ", "EUR": "€ ", "USD": "$ ", "GBP": "£ "}.get(currency, f"{currency} ")
         return prefix + format_number_br(value)
     if format_name == "percent":
         return format_number_br(value) + "%"

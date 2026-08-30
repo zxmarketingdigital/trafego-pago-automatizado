@@ -115,7 +115,9 @@
     return;
   }
 
-  document.getElementById('account').textContent = `Conta: ${data.ad_account_id} · Spend total: R$${(data.spend_total||0).toFixed(2)}`;
+  const CUR = ({BRL:'R$', EUR:'€', USD:'$', GBP:'£'})[data.currency] || (data.currency ? data.currency + ' ' : 'R$');
+
+  document.getElementById('account').textContent = `Conta: ${data.ad_account_id} · Spend total: ${CUR}${(data.spend_total||0).toFixed(2)}`;
 
   const primary = data.primary_kpi;
   const primaryMeta = (data.kpis_summary[primary] || {});
@@ -164,7 +166,7 @@
         <span class="badge ${c.decide}">${c.decide}</span>
         <b>${escapeHtml(c.name)}</b>
         <span style="color:var(--muted)">· ${c.objective || ''}</span>
-        <span style="float:right">R$${c.spend.toFixed(2)} · ${metricsCells}</span>
+        <span style="float:right">${CUR}${c.spend.toFixed(2)} · ${metricsCells}</span>
       </summary>
       <div class="nested">${adsetsHtml}</div>
     </details>`;
@@ -173,7 +175,7 @@
   function renderAdset(as, kpis) {
     const adsHtml = renderAdsTable(as.ads, kpis);
     return `<details>
-      <summary><b>${escapeHtml(as.name)}</b> <span style="float:right;color:var(--muted)">R$${as.spend.toFixed(2)}</span></summary>
+      <summary><b>${escapeHtml(as.name)}</b> <span style="float:right;color:var(--muted)">${CUR}${as.spend.toFixed(2)}</span></summary>
       <div class="nested">${adsHtml}</div>
     </details>`;
   }
@@ -184,7 +186,7 @@
     const rows = sorted.map(a => `<tr>
       <td><span class="badge ${a.decide}">${a.decide}</span></td>
       <td>${escapeHtml(a.ad_name)}</td>
-      <td class="num">R$${a.spend.toFixed(2)}</td>
+      <td class="num">${CUR}${a.spend.toFixed(2)}</td>
       ${kpis.map(k=>`<td class="num">${formatValue(k, a.metrics[k])}</td>`).join('')}
       <td style="color:var(--muted);font-size:12px">${escapeHtml(a.decide_reason || '')}</td>
     </tr>`).join('');
@@ -195,14 +197,14 @@
     if (v === null || v === undefined) return '—';
     if (key === 'ctr' || key === 'frequency') return Number(v).toFixed(2) + (key==='ctr'?'%':'');
     if (key === 'roas') return Number(v).toFixed(2) + 'x';
-    return 'R$' + Number(v).toFixed(2);
+    return CUR + Number(v).toFixed(2);
   }
   function formatTarget(key, t) {
     if (t === null || t === undefined) return '—';
     if (key === 'ctr') return Number(t).toFixed(2) + '%';
     if (key === 'roas') return Number(t).toFixed(2) + 'x';
     if (key === 'frequency') return Number(t).toFixed(2);
-    return 'R$' + Number(t).toFixed(2);
+    return CUR + Number(t).toFixed(2);
   }
   function labelFor(key) {
     const m = {cpl:'CPL', cpa:'CPA', roas:'ROAS', cost_per_msg:'Custo/Msg', cpm:'CPM', ctr:'CTR', cpc:'CPC', frequency:'Frequência', cost_per_install:'Custo/Install'};

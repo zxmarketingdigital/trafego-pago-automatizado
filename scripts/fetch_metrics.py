@@ -224,6 +224,19 @@ def calc_kpi(raws, kpi_key):
     return None
 
 
+CURRENCY_SYMBOLS = {"BRL": "R$", "EUR": "€", "USD": "$", "GBP": "£"}
+CUR = "R$"  # símbolo da moeda da conta; atualizado em main() via Graph API
+
+
+def fetch_account_currency(account_id, token):
+    """Busca a moeda da conta (ex: EUR, BRL). Fallback: BRL."""
+    try:
+        data = graph_get(account_id, {"fields": "currency"}, token)
+        return data.get("currency") or "BRL"
+    except Exception:
+        return "BRL"
+
+
 def decide(value, kpi_meta, spend):
     target = kpi_meta.get("target") or 0
     if target <= 0:
@@ -235,11 +248,11 @@ def decide(value, kpi_meta, spend):
 
     if value is None:
         if spend >= target * 3:
-            return "KILL", f"sem conversões após R${spend:.2f} de gasto"
+            return "KILL", f"sem conversões após {CUR}{spend:.2f} de gasto"
         return "KEEP-amostra", "amostra insuficiente"
 
     if spend < min_spend:
-        return "KEEP-amostra", f"spend R${spend:.2f} < min R${min_spend:.2f}"
+        return "KEEP-amostra", f"spend {CUR}{spend:.2f} < min {CUR}{min_spend:.2f}"
 
     if better == "lower":
         if value <= target * scale_at:
@@ -403,6 +416,11 @@ def main():
     windows = perfil.get("windows", [4, 7, 14, 30])
     log(f"START fetch account={ad_account} windows={windows}")
 
+    # Moeda real da conta (ex: EUR) — usada no JSON e nos textos
+    global CUR
+    account_currency = fetch_account_currency(ad_account, token)
+    CUR = CURRENCY_SYMBOLS.get(account_currency, account_currency + " ")
+
     # Fetch campaign metadata uma vez (effective_status + budget)
     try:
         campaign_meta = fetch_campaign_meta(ad_account, token)
@@ -421,7 +439,7 @@ def main():
                 "generated_at": datetime.now(BRT).isoformat(timespec="seconds"),
                 "window_days": days,
                 "ad_account_id": ad_account,
-                "currency": "BRL",
+                "currency": account_currency,
                 "perfil_kpis": [k["key"] for k in perfil["kpis"]],
                 "primary_kpi": perfil["primary_kpi"],
                 "kpis_summary": kpis_summary,
@@ -431,7 +449,7 @@ def main():
             }
             outfile = DASH_DIR / f"paid-traffic-{days}d.json"
             outfile.write_text(json.dumps(out, indent=2, ensure_ascii=False))
-            print(f"✅ {outfile.name} — {len(rows)} ads, R${raws.get('spend', 0):.2f}")
+            print(f"✅ {outfile.name} — {len(rows)} ads, {CUR}{raws.get('spend', 0):.2f}")
             log(f"  -> {outfile.name} OK")
         except Exception as e:
             failures += 1

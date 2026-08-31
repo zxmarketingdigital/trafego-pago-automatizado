@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-11 — README ganhou o endereço do MCP oficial Meta
+
+Fix veio de investigação em ~/projetos/setup-meta-ads (produto é o mesmo, repos são separados: este é o que o comprador clona).
+
+Commit 354a203 rebaseado sobre outro commit (b0030e1, de outra sessão em paralelo, sobre WSL2) que tocava a mesma seção de Pré-requisitos — rebase automático resolveu sem conflito real.
+
 ## 2026-08-07 — Agendamento cross-platform: cron Linux/WSL + Task Scheduler Windows
 
 **Feito:** setup_launchagents.py e setup_uninstall.py ganharam ramos Linux (cron) e Windows (schtasks), preservando o ramo macOS intacto. 3 tentativas via /dev-autonomo — a 2a esvaziou o arquivo por engano (recuperado do baseline via git show), a 3a com spec consolidada fechou limpo.

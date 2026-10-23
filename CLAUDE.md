@@ -150,7 +150,7 @@ O script vai perguntar:
 
 Salva em `~/.operacao-ia/config/meta_perfil.json`. Mostra resumo visual para confirmar.
 
-> ⚠️ **Se o aluno gerencia mais de uma conta de anúncios**, avise antes de prosseguir: este setup é para **1 conta por instalação** — `META_AD_ACCOUNT_ID`, o perfil e os dados do dashboard (`~/.operacao-ia/dashboards/`) ficam num caminho global (`~/.operacao-ia/`), não isolado por conta. Trocar de conta (`setup_meta_oauth.py --set-account`) sobrescreve os dados da conta anterior no próximo fetch — não há isolamento nativo hoje. Se ele precisa gerenciar 2+ contas, oriente a falar com o suporte antes de continuar em vez de tentar rodar uma segunda vez na mesma máquina.
+> ℹ️ **Se o aluno atende vários clientes ou gerencia mais de uma conta de anúncios**: a regra é **uma conta (do Claude), um projeto por cliente** — ele não precisa comprar nem instalar de novo por cliente. Mas atenção ao configurar: hoje `META_AD_ACCOUNT_ID`, o perfil e os dados do dashboard (`~/.operacao-ia/dashboards/`) ficam numa pasta única (`~/.operacao-ia/`), compartilhada entre projetos. Trocar de conta (`setup_meta_oauth.py --set-account`) sobrescreve os dados do cliente anterior no próximo fetch. Antes de configurar o segundo cliente, avise isso, peça para guardar uma cópia da pasta do primeiro e oriente a abrir um ticket em https://suporte.zxlab.com.br/hub para o passo a passo de separação por projeto. Não rode o setup de uma segunda conta por cima sem esse aviso.
 
 Apos o script:
 

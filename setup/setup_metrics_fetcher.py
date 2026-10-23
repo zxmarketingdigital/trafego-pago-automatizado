@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Setup 6 — Etapa 4: Primeira coleta de métricas
-Copia fetch_metrics.py para ~/.operacao-ia/scripts/meta/ e dispara a primeira execução.
+Copia fetch_metrics.py para <projeto>/scripts/meta/ (padrão: ~/.operacao-ia) e dispara a primeira execução.
 """
 import json
 import shutil
@@ -10,21 +10,27 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OPERACAO = Path.home() / ".operacao-ia"
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
 SCRIPT_SRC = REPO_ROOT / "scripts" / "fetch_metrics.py"
-SCRIPT_DST = OPERACAO / "scripts" / "meta" / "fetch_metrics.py"
+SCRIPT_DST = _P.scripts_meta / "fetch_metrics.py"
 RUNNER_SRC = REPO_ROOT / "scripts" / "run_fetch.sh"
-RUNNER_DST = OPERACAO / "scripts" / "meta" / "run_fetch.sh"
-PERFIL = OPERACAO / "config" / "meta_perfil.json"
-DASH_DIR = OPERACAO / "dashboards"
+RUNNER_DST = _P.scripts_meta / "run_fetch.sh"
+PERFIL = _P.perfil
+DASH_DIR = _P.dashboards
 
 
 def main():
+    tpa_paths.announce(_P)
     if not PERFIL.exists():
         print("❌ Perfil não encontrado. Rode setup_perfil_campanhas.py (Etapa 2) primeiro.")
         sys.exit(1)
 
     SCRIPT_DST.parent.mkdir(parents=True, exist_ok=True)
+    tpa_paths.sync_helper(SCRIPT_DST.parent)  # o script instalado acha o próprio projeto
     shutil.copy2(SCRIPT_SRC, SCRIPT_DST)
     SCRIPT_DST.chmod(0o755)
     print(f"✅ fetch_metrics.py copiado para {SCRIPT_DST}")

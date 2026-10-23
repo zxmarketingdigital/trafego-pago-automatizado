@@ -2,7 +2,7 @@
 """
 Instalador opt-in do Bônus 1 — Meta CAPI.
 
-Copia os dois scripts para ~/.operacao-ia/scripts/meta/, garante chmod 600 no
+Copia os dois scripts para <projeto>/scripts/meta/ (padrão: ~/.operacao-ia), garante chmod 600 no
 meta.env (quando ele existe), valida a configuração e roda a prova ao vivo.
 """
 
@@ -18,9 +18,13 @@ from typing import Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT_SRC_DIR = REPO_ROOT / "scripts"
-OPERACAO = Path.home() / ".operacao-ia"
-SCRIPT_DST_DIR = OPERACAO / "scripts" / "meta"
-META_ENV = OPERACAO / "config" / "meta.env"
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+SCRIPT_DST_DIR = _P.scripts_meta
+META_ENV = _P.meta_env
 SCRIPT_NAMES = ("capi_events.py", "capi_verify.py")
 
 
@@ -100,7 +104,9 @@ def main() -> int:
     if args.hours < 1:
         parser.error("--hours precisa ser maior que zero")
 
+    tpa_paths.announce(_P)
     SCRIPT_DST_DIR.mkdir(parents=True, exist_ok=True)
+    tpa_paths.sync_helper(SCRIPT_DST_DIR)  # scripts instalados acham o próprio projeto
     installed = []
     unchanged = []
     try:

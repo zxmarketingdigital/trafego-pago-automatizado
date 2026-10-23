@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.zxlab.meta-report-whatsapp</string>
+  <string>{LABEL}</string>
   <key>ProgramArguments</key>
   <array>
     <string>{PYTHON}</string>
-    <string>{HOME}/.operacao-ia/scripts/meta/send_whatsapp_report.py</string>
+    <string>{OPERACAO}/scripts/meta/send_whatsapp_report.py</string>
   </array>
   <key>StartCalendarInterval</key>
   <array>
@@ -19,9 +19,9 @@
   <key>RunAtLoad</key>
   <false/>
   <key>StandardOutPath</key>
-  <string>{HOME}/.operacao-ia/logs/meta-report-whatsapp.stdout.log</string>
+  <string>{OPERACAO}/logs/meta-report-whatsapp.stdout.log</string>
   <key>StandardErrorPath</key>
-  <string>{HOME}/.operacao-ia/logs/meta-report-whatsapp.stderr.log</string>
+  <string>{OPERACAO}/logs/meta-report-whatsapp.stderr.log</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>

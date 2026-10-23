@@ -29,9 +29,13 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-OPERACAO = Path.home() / ".operacao-ia"
-PERFIL = OPERACAO / "config" / "meta_perfil.json"
-META_ENV = OPERACAO / "config" / "meta.env"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+PERFIL = _P.perfil
+META_ENV = _P.meta_env
 GRAPH_BASE = "https://graph.facebook.com/v21.0"
 CURRENCY_SYMBOLS = {"BRL": "R$", "EUR": "€", "USD": "$", "GBP": "£"}
 
@@ -451,6 +455,8 @@ def main():
     parser.add_argument("--template", action="store_true", help="Imprime JSON template")
     parser.add_argument("--show", action="store_true", help="Mostra perfil salvo")
     args = parser.parse_args()
+
+    tpa_paths.announce(_P, out=sys.stderr)  # stderr: --template imprime JSON no stdout
 
     if args.template:
         cmd_template(); return 0

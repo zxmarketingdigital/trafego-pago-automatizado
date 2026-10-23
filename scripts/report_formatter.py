@@ -33,7 +33,11 @@ STATUS_COLORS = {
 
 
 def _operation_dir(operation_dir: Optional[Path] = None) -> Path:
-    return Path(operation_dir) if operation_dir else Path.home() / ".operacao-ia"
+    if operation_dir:
+        return Path(operation_dir)
+    import tpa_paths
+
+    return tpa_paths.active_paths().home
 
 
 def format_number_br(value: Any, decimals: int = 2) -> str:
@@ -168,7 +172,7 @@ def _empty_report(window: int, source: Path, reason: str) -> Dict[str, Any]:
         "source": str(source),
         "footer": (
             f"Fonte esperada: {source}. Para conferir na hora: "
-            "python3 ~/.operacao-ia/scripts/meta/report_formatter.py --format text"
+            f"python3 {source.parent.parent}/scripts/meta/report_formatter.py --format text"
         ),
     }
 
@@ -345,7 +349,7 @@ def assemble_report(
         "source": str(source),
         "footer": (
             f"Dados do coletor local: paid-traffic-{selected_window}d.json. "
-            "Para conferir na hora: python3 ~/.operacao-ia/scripts/meta/"
+            f"Para conferir na hora: python3 {source.parent.parent}/scripts/meta/"
             "report_formatter.py --format text"
         ),
     }

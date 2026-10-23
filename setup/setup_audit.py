@@ -11,7 +11,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+PORT = _P.port
+FETCH_LABEL = tpa_paths.label_for("com.zxlab.meta-fetch", _P.name)
+DASH_LABEL = tpa_paths.label_for("com.zxlab.meta-dashboard-server", _P.name)
 SKILLS = Path.home() / ".claude" / "skills"
 LAUNCH = Path.home() / "Library" / "LaunchAgents"
 
@@ -27,7 +34,7 @@ def check(name, fn):
 
 
 def c_perfil():
-    p = OPERACAO / "config" / "meta_perfil.json"
+    p = _P.perfil
     if not p.exists():
         return False, "meta_perfil.json não existe (rode E2)"
     try:
@@ -51,7 +58,7 @@ def c_skills():
 
 
 def c_dashboards():
-    d = OPERACAO / "dashboards"
+    d = _P.dashboards
     if not d.exists():
         return False, "Pasta não existe"
     jsons = sorted(d.glob("paid-traffic-*d.json"))
@@ -61,7 +68,7 @@ def c_dashboards():
 
 
 def c_dashboard_html():
-    d = OPERACAO / "dashboards"
+    d = _P.dashboards
     htmls = sorted(d.glob("paid-traffic-dashboard-*d.html"))
     if not htmls:
         return False, "Nenhum HTML gerado (rode E5)"
@@ -69,12 +76,12 @@ def c_dashboard_html():
 
 
 def c_fetch_script():
-    p = OPERACAO / "scripts" / "meta" / "fetch_metrics.py"
+    p = _P.scripts_meta / "fetch_metrics.py"
     return (p.exists(), str(p) if p.exists() else "Não copiado")
 
 
 def c_dashboard_script():
-    p = OPERACAO / "scripts" / "meta" / "paid_traffic_dashboard.py"
+    p = _P.scripts_meta / "paid_traffic_dashboard.py"
     return (p.exists(), str(p) if p.exists() else "Não copiado")
 
 
@@ -82,16 +89,16 @@ def c_server_running():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
-        s.connect(("127.0.0.1", 8888))
+        s.connect(("127.0.0.1", PORT))
         s.close()
-        return True, "localhost:8888 respondendo"
+        return True, f"localhost:{PORT} respondendo"
     except Exception:
         return False, "Server não está rodando (E5/E9)"
 
 
 def _fetch_skipped():
     """Retorna razão do skip (se aluno escolheu pular meta-fetch em E9) ou None."""
-    p = OPERACAO / "config" / "setup6_progress.json"
+    p = _P.progress
     if not p.exists():
         return None
     try:
@@ -104,9 +111,9 @@ def c_launchagents_files():
     if platform.system() != "Darwin":
         return True, "macOS-only — pulado"
     skip = _fetch_skipped()
-    expected = ["com.zxlab.meta-dashboard-server.plist"]
+    expected = [DASH_LABEL + ".plist"]
     if not skip:
-        expected.insert(0, "com.zxlab.meta-fetch.plist")
+        expected.insert(0, FETCH_LABEL + ".plist")
     missing = [n for n in expected if not (LAUNCH / n).exists()]
     if missing:
         return False, f"Faltando: {missing}"
@@ -120,7 +127,9 @@ def c_launchagents_loaded():
     skip = _fetch_skipped()
     expected_count = 1 if skip else 2
     result = subprocess.run(["launchctl", "list"], capture_output=True, text=True)
-    count = sum(1 for l in result.stdout.splitlines() if "zxlab.meta" in l)
+    # Conta só os jobs DESTE projeto (outros projetos têm labels com outro sufixo).
+    mine = {DASH_LABEL} if skip else {FETCH_LABEL, DASH_LABEL}
+    count = sum(1 for l in result.stdout.splitlines() if l.split() and l.split()[-1] in mine)
     if count < expected_count:
         return False, f"Esperava {expected_count} job(s) ativo(s), encontrou {count}"
     suffix = f" (fetch pulado: {skip})" if skip else ""
@@ -128,7 +137,7 @@ def c_launchagents_loaded():
 
 
 def c_phase_completed():
-    p = OPERACAO / "config" / "config.json"
+    p = _P.shared_config
     if not p.exists():
         return False, "config.json base não existe"
     try:
@@ -139,7 +148,7 @@ def c_phase_completed():
 
 
 def c_meta_env():
-    p = OPERACAO / "config" / "meta.env"
+    p = _P.meta_env
     if not p.exists():
         return False, "meta.env não criado (E1)"
     content = p.read_text()
@@ -154,6 +163,8 @@ def c_python_version():
 
 def main():
     print("\n🔍 Auditoria Técnica — Setup 6\n")
+    tpa_paths.announce(_P)
+    print()
 
     check("Pré-requisito Setup 5",     c_phase_completed)
     check("Python 3.9+",                c_python_version)
@@ -166,7 +177,7 @@ def main():
     check("Dashboards HTML gerados",    c_dashboard_html)
     check("LaunchAgents instalados",    c_launchagents_files)
     check("LaunchAgents ativos",        c_launchagents_loaded)
-    check("Server localhost:8888",      c_server_running)
+    check(f"Server localhost:{PORT}",      c_server_running)
 
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)

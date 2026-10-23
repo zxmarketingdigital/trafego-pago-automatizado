@@ -2,7 +2,11 @@
 """
 Setup 6 — Etapa 9: LaunchAgents (macOS)
 Instala 2 plists em ~/Library/LaunchAgents e dá launchctl load.
-Substitui placeholders {HOME} e {PYTHON} no template.
+Substitui os placeholders {LABEL}, {OPERACAO}, {PORT}, {HOME} e {PYTHON} no template.
+
+Um agendamento POR PROJETO: o projeto padrão mantém os labels históricos
+(com.zxlab.meta-fetch ...); um projeto nomeado instala
+com.zxlab.meta-fetch.<nome> ... apontando para a pasta e a porta dele.
 
 Detecta conflitos com outros fetchers Meta antes de instalar (evita
 duplicar chamadas API com creative-roas-dashboard, meta-capi-refund, etc.).
@@ -16,17 +20,23 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
 PLIST_SRC = REPO_ROOT / "launchagents"
 LAUNCH_DST = Path.home() / "Library" / "LaunchAgents"
-PROGRESS = Path.home() / ".operacao-ia" / "config" / "setup6_progress.json"
+PROGRESS = _P.progress
 
-PLISTS = [
+# Templates (nome base) e o plist que cada um vira neste projeto.
+BASE_PLISTS = [
     "com.zxlab.meta-fetch.plist",
     "com.zxlab.meta-dashboard-server.plist",
 ]
+PLISTS = [tpa_paths.label_for(b[:-len(".plist")], _P.name) + ".plist" for b in BASE_PLISTS]
 
 # Identifica meta-fetch entre os PLISTS (excluído quando há conflito)
-FETCH_PLIST = "com.zxlab.meta-fetch.plist"
+FETCH_PLIST = PLISTS[0]
 
 # Whitelist de labels conhecidos como fetchers Meta API. Restritivo —
 # evita falso positivo em labels com substring "meta" (ex: metadata helper).
@@ -45,7 +55,10 @@ SELF_LABEL_PATTERN = re.compile(r"com\.zxlab\.meta-(fetch|dashboard-server)")
 
 
 def detect_conflicts():
-    """Retorna lista de labels LaunchAgent que são fetchers Meta de outros projetos.
+    """Retorna lista de labels LaunchAgent que são fetchers Meta de OUTRAS ferramentas.
+
+    Os jobs deste produto (inclusive os de outros projetos/clientes, com sufixo .<nome>)
+    nunca contam como conflito: cada cliente tem a própria conta de anúncios.
 
     Match restrito: whitelist de labels conhecidos OU padrão `.meta-ads/.fb-ads/
     .creative-roas/.meta-fetch.`. Não usa substring 'meta' solta — falso
@@ -98,12 +111,14 @@ def clear_progress_keys(*keys):
 
 
 def install_plist(name, home, python):
-    src = PLIST_SRC / name
+    """`name` é o arquivo do projeto (com sufixo no projeto nomeado)."""
+    base_name = BASE_PLISTS[PLISTS.index(name)]
+    src = PLIST_SRC / base_name
     dst = LAUNCH_DST / name
     if not src.exists():
         print(f"❌ Plist faltando: {src}")
         return False
-    content = src.read_text().replace("{HOME}", home).replace("{PYTHON}", python)
+    content = tpa_paths.render_plist(src.read_text(), _P, base_name[:-len(".plist")], python)
     dst.write_text(content)
     print(f"✅ {dst.name}")
     subprocess.run(["launchctl", "unload", str(dst)], capture_output=True)
@@ -115,14 +130,17 @@ def install_plist(name, home, python):
 
 
 def main():
+    tpa_paths.announce(_P)
     if platform.system() != "Darwin":
         print(f"⚠️  LaunchAgents é macOS-only. Você está em {platform.system()}.")
-        print("   Pule esta etapa e agende os 2 jobs por cron (Linux ou Windows via WSL2):")
+        print(f"   Pule esta etapa e agende os 2 jobs do projeto '{_P.name}' por cron (Linux ou Windows via WSL2):")
         print()
-        print(f"   5 8,13,19 * * * /bin/bash {Path.home()}/.operacao-ia/scripts/meta/run_fetch.sh")
-        print(f"   @reboot /bin/bash {Path.home()}/.operacao-ia/scripts/meta/start_dashboard.sh")
+        for line in tpa_paths.cron_lines(_P):
+            print(f"   {line}")
         print()
-        print("   (rode 'crontab -e' e cole as 2 linhas acima). No Windows sem WSL2 não há")
+        print("   (rode 'crontab -e' e cole as 2 linhas acima — um par de linhas POR PROJETO;")
+        print("    o marcador '# tpa:<nome>' no fim de cada linha diz de qual projeto ela é).")
+        print("   No Windows sem WSL2 não há")
         print("   como agendar automaticamente — os scripts são bash; instale o WSL2")
         print("   ('wsl --install' no PowerShell como admin) e rode o setup dentro dele.")
         sys.exit(0)
@@ -169,7 +187,8 @@ def main():
 
     print("\n📋 Validando jobs ativos...")
     result = subprocess.run(["launchctl", "list"], capture_output=True, text=True)
-    active = [l for l in result.stdout.splitlines() if "zxlab.meta" in l]
+    mine = {n[:-len(".plist")] for n in plists_to_install}
+    active = [l for l in result.stdout.splitlines() if l.split() and l.split()[-1] in mine]
     for line in active:
         print(f"   {line}")
 

@@ -6,17 +6,21 @@ Imprime instruções pro Claude invocar `meta-campaign-launcher` com template
 DEMO pré-preenchido baseado em meta_perfil.json. Não cria diretamente —
 o Claude executa via tool calls do MCP oficial Meta.
 
-Salva flag em ~/.operacao-ia/config/setup6_progress.json quando completa.
+Salva flag em <projeto>/config/setup6_progress.json (padrão: ~/.operacao-ia) quando completa.
 """
 import json
 import sys
 from datetime import datetime
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
-PERFIL = OPERACAO / "config" / "meta_perfil.json"
-META_ENV = OPERACAO / "config" / "meta.env"
-PROGRESS = OPERACAO / "config" / "setup6_progress.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+PERFIL = _P.perfil
+META_ENV = _P.meta_env
+PROGRESS = _P.progress
 
 
 def read_env(key):
@@ -41,6 +45,7 @@ def update_progress(key, value):
 
 
 def main():
+    tpa_paths.announce(_P)
     if not PERFIL.exists():
         print("❌ meta_perfil.json não existe. Rode E2 (setup_perfil_campanhas.py).")
         return 1

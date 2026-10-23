@@ -12,10 +12,11 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
+import tpa_paths
 from report_formatter import assemble_report, render_whatsapp
 
 
-CONFIG_PATH = Path.home() / ".operacao-ia" / "config" / "meta.env"
+CONFIG_PATH = tpa_paths.active_paths().meta_env  # config Meta do projeto vigente
 CLOUD_ENDPOINT = "https://graph.facebook.com/v21.0/{phone_number_id}/messages"
 PROVIDERS = ("cloud_api", "evolution")
 PROVIDER_KEYS = {

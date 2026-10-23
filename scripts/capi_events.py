@@ -24,9 +24,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+import tpa_paths
+
 
 GRAPH_BASE = "https://graph.facebook.com/v21.0"
-META_ENV = Path.home() / ".operacao-ia" / "config" / "meta.env"
+META_ENV = tpa_paths.active_paths().meta_env  # config Meta do projeto vigente
 CONFIG_KEYS = (
     "CAPI_PIXEL_ID",
     "CAPI_TOKEN",

@@ -8,10 +8,15 @@ import sys
 import webbrowser
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
-CONFIG = OPERACAO / "config" / "config.json"
-PERFIL = OPERACAO / "config" / "meta_perfil.json"
-META_ENV = OPERACAO / "config" / "meta.env"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+CONFIG = _P.shared_config  # phase_completed é compartilhado entre os projetos
+PERFIL = _P.perfil
+META_ENV = _P.meta_env
+PORT = _P.port
 
 
 def read_ad_account():
@@ -37,6 +42,7 @@ def fmt_target(k, currency="BRL"):
 
 
 def main():
+    tpa_paths.announce(_P)
     if not CONFIG.exists():
         print("❌ config.json não existe")
         sys.exit(1)
@@ -55,7 +61,7 @@ def main():
     kpis_lista = ", ".join(k["key"] for k in perfil["kpis"])
     metas_resumo = " | ".join(f"{k['label']} {fmt_target(k, currency)}" for k in perfil["kpis"])
 
-    url = "http://localhost:8888/paid-traffic-dashboard-7d.html"
+    url = f"http://localhost:{PORT}/paid-traffic-dashboard-7d.html"
     try:
         webbrowser.open(url)
     except Exception:
@@ -67,7 +73,8 @@ Setup 6 concluido!
 O que voce tem agora:
 - MCP oficial Meta conectado a conta {ad_account}
 - 6 skills instaladas (5 especialistas + 1 agente orquestrador)
-- Dashboard rodando em http://localhost:8888 (atualiza 8h/13h/19h)
+- Dashboard rodando em http://localhost:{PORT} (atualiza 8h/13h/19h)
+- Projeto: {_P.name} ({_P.home})
 - Estrategia decide() ativa nos KPIs: {kpis_lista}
 - Metas configuradas: {metas_resumo}
 

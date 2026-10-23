@@ -12,12 +12,18 @@ from typing import Tuple
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OPERACAO = Path.home() / ".operacao-ia"
-SCRIPT_DST_DIR = OPERACAO / "scripts" / "meta"
-META_ENV = OPERACAO / "config" / "meta.env"
-LOG_DIR = OPERACAO / "logs"
-PLIST_NAME = "com.zxlab.meta-report-email.plist"
-PLIST_SRC = REPO_ROOT / "launchagents" / PLIST_NAME
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+SCRIPT_DST_DIR = _P.scripts_meta
+META_ENV = _P.meta_env
+LOG_DIR = _P.logs
+BASE_LABEL = "com.zxlab.meta-report-email"
+# Projeto padrão mantém o nome histórico; projeto nomeado leva o nome no label.
+PLIST_NAME = tpa_paths.label_for(BASE_LABEL, _P.name) + ".plist"
+PLIST_SRC = REPO_ROOT / "launchagents" / (BASE_LABEL + ".plist")
 PLIST_DST = Path.home() / "Library" / "LaunchAgents" / PLIST_NAME
 SCRIPT_NAMES = ("report_formatter.py", "send_email_report.py")
 
@@ -41,10 +47,8 @@ def _install_plist() -> bool:
         return False
     try:
         PLIST_DST.parent.mkdir(parents=True, exist_ok=True)
-        content = (
-            PLIST_SRC.read_text(encoding="utf-8")
-            .replace("{HOME}", str(Path.home()))
-            .replace("{PYTHON}", sys.executable)
+        content = tpa_paths.render_plist(
+            PLIST_SRC.read_text(encoding="utf-8"), _P, BASE_LABEL, sys.executable
         )
         PLIST_DST.write_text(content, encoding="utf-8")
         # unload antes do load evita duplicação e também atualiza uma instalação anterior.
@@ -69,8 +73,10 @@ def main() -> int:
         print(f"❌ Este agendamento usa LaunchAgent do macOS; sistema: {platform.system()}.")
         return 1
 
+    tpa_paths.announce(_P)
     SCRIPT_DST_DIR.mkdir(parents=True, exist_ok=True)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    tpa_paths.sync_helper(SCRIPT_DST_DIR)  # scripts instalados acham o próprio projeto
     try:
         for name in SCRIPT_NAMES:
             changed, dst = _copy_script(name)

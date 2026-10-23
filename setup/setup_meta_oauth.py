@@ -9,7 +9,7 @@ Fluxo de 2 vias:
     business.facebook.com/settings/system-users (permissões:
     ads_management, ads_read, business_management).
 
-O token vai pra `~/.operacao-ia/config/meta.env` (chmod 600). Esta é a
+O token vai pra `<projeto>/config/meta.env` (chmod 600; projeto padrão = `~/.operacao-ia`). Esta é a
 fonte de verdade pro fetcher autônomo (LaunchAgent).
 
 Modos:
@@ -35,13 +35,20 @@ import argparse
 import json
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-OPERACAO = Path.home() / ".operacao-ia"
-META_ENV = OPERACAO / "config" / "meta.env"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+META_ENV = _P.meta_env
+# meta.env é lido com `source` pelo run_fetch.sh: caminho fora do padrão vai entre aspas.
+_BASE_STR = "~/.operacao-ia" if _P.base == Path.home() / ".operacao-ia" else shlex.quote(str(_P.base))
 GRAPH_BASE = "https://graph.facebook.com/v21.0"
 
 TEMPLATE = """# Setup 6 — Tráfego Pago Meta ADS
@@ -56,7 +63,7 @@ META_PIXEL_ID=
 SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
 
-OPERACAO_IA_HOME=~/.operacao-ia
+OPERACAO_IA_HOME={operacao_home}
 """
 
 
@@ -160,6 +167,7 @@ def write_kv(key, value):
         META_ENV.write_text(TEMPLATE.format(
             access_token=defaults["META_ACCESS_TOKEN"],
             ad_account_id=defaults["META_AD_ACCOUNT_ID"],
+            operacao_home=_BASE_STR,
         ))
     # chmod 600 — token é segredo
     try:
@@ -172,8 +180,9 @@ def write_token(token):
     if not token or len(token) < 50:
         print("❌ Token inválido (vazio ou muito curto).")
         return 1
-    if " " in token or "\n" in token:
-        print("❌ Token contém espaço ou quebra de linha.")
+    if not re.fullmatch(r"[A-Za-z0-9_.~+/=-]+", token):
+        # meta.env é executado com `source` pelo run_fetch.sh: nada de $ ` ; | & aspas, espaço.
+        print("❌ Token com caracteres fora do padrão (espaço, quebra de linha ou símbolo de shell).")
         return 1
     write_kv("META_ACCESS_TOKEN", token)
     masked = token[:8] + "…" + token[-4:]
@@ -182,12 +191,21 @@ def write_token(token):
     return 0
 
 
-def write_account(ad_account_id):
-    if not re.match(r"^act_\d+$", ad_account_id):
+def write_account(ad_account_id, substituir=False):
+    if not re.fullmatch(r"act_\d+", ad_account_id):
         print(f"❌ ad_account_id inválido: {ad_account_id} (esperado: act_<dígitos>)")
         return 1
+    atual = read_env("META_AD_ACCOUNT_ID")
+    if atual and atual != ad_account_id and not substituir:
+        print(f"❌ O projeto '{_P.name}' já usa a conta {atual}; nada foi alterado.")
+        print("   Para atender OUTRO cliente sem perder este, crie um projeto separado:")
+        print("     python3 setup/tpa_projeto.py criar <nome-do-cliente>")
+        print(f"   e rode o --set-account {ad_account_id} de novo lá.")
+        print(f"   Só se for para TROCAR a conta deste mesmo cliente (ex.: id digitado errado): "
+              f"--set-account {ad_account_id} --substituir-conta")
+        return 2
     write_kv("META_AD_ACCOUNT_ID", ad_account_id)
-    print(f"✅ META_AD_ACCOUNT_ID={ad_account_id} gravado em {META_ENV}")
+    print(f"✅ META_AD_ACCOUNT_ID={ad_account_id} gravado em {META_ENV} (projeto '{_P.name}')")
     return 0
 
 
@@ -307,6 +325,9 @@ def cmd_sync_from_mcp():
         print("   Confirme que rodou `mcp__meta-official__authenticate` + `complete_authentication`.")
         print("   Se Via A falhou, use Via B: python3 setup/setup_meta_oauth.py --renew")
         return 1
+    if not _P.is_default:
+        print(f"ℹ️  O token do MCP é o do login Meta deste Claude (um só, vale para todos os projetos). "
+              f"Se o cliente '{_P.name}' tem token próprio (System User), use --renew neste projeto.")
     rc = write_token(token)
     if rc != 0:
         return rc
@@ -323,6 +344,7 @@ def cmd_sync_from_mcp():
 
 
 def cmd_instructions():
+    tpa_paths.announce(_P)
     if not OPERACAO.exists():
         print("❌ Rode setup_base_s6.py (E0) primeiro.")
         return 1
@@ -366,6 +388,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--set-account", metavar="ACT_ID",
                         help="Grava META_AD_ACCOUNT_ID em meta.env")
+    parser.add_argument("--substituir-conta", action="store_true",
+                        help="Com --set-account: troca a conta JÁ gravada neste projeto (sem isso, recusa)")
     parser.add_argument("--set-token", metavar="TOKEN",
                         help="Grava META_ACCESS_TOKEN em meta.env (chmod 600)")
     parser.add_argument("--renew", action="store_true",
@@ -376,8 +400,11 @@ def main():
                         help="Valida token + meta.env (Graph API GET /me)")
     args = parser.parse_args()
 
+    if args.set_account or args.set_token or args.renew or args.sync_from_mcp:
+        # quem grava credencial diz antes EM QUAL projeto está gravando
+        tpa_paths.announce(_P, sys.stderr)
     if args.set_account:
-        return write_account(args.set_account)
+        return write_account(args.set_account, args.substituir_conta)
     if args.set_token:
         return write_token(args.set_token)
     if args.renew:

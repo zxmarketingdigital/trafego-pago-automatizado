@@ -12,9 +12,14 @@ import webbrowser
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OPERACAO = Path.home() / ".operacao-ia"
-META_DIR = OPERACAO / "scripts" / "meta"
-DASH_DIR = OPERACAO / "dashboards"
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+META_DIR = _P.scripts_meta
+DASH_DIR = _P.dashboards
+PORT = _P.port  # 8888 no projeto padrão; porta própria nos projetos nomeados
 
 FILES = [
     (REPO_ROOT / "scripts" / "paid_traffic_dashboard.py", META_DIR / "paid_traffic_dashboard.py"),
@@ -25,8 +30,10 @@ FILES = [
 
 
 def main():
+    tpa_paths.announce(_P)
     META_DIR.mkdir(parents=True, exist_ok=True)
     DASH_DIR.mkdir(parents=True, exist_ok=True)
+    tpa_paths.sync_helper(META_DIR)  # scripts instalados acham o próprio projeto
 
     for src, dst in FILES:
         if not src.exists():
@@ -47,14 +54,14 @@ def main():
     if result.returncode != 0:
         print(f"⚠️  Geração falhou: {result.stderr}")
 
-    print("\n🌐 Iniciando server em background (localhost:8888)...")
+    print(f"\n🌐 Iniciando server em background (localhost:{PORT})...")
     subprocess.Popen(
         ["bash", str(META_DIR / "start_dashboard.sh")],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
 
-    url = "http://localhost:8888/paid-traffic-dashboard-7d.html"
+    url = f"http://localhost:{PORT}/paid-traffic-dashboard-7d.html"
     print(f"📊 Abrindo {url}")
     try:
         webbrowser.open(url)

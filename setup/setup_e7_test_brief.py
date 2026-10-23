@@ -3,16 +3,20 @@
 Setup 6 — Etapa 7 (Test): gera briefing criativo demo.
 
 Instrui Claude a invocar `meta-creative-brief` com input padrão (ou aluno
-fornece) e salvar markdown em ~/.operacao-ia/briefings/.
+fornece) e salvar markdown em <projeto>/briefings/ (padrão: ~/.operacao-ia/briefings/).
 """
 import json
 import sys
 from datetime import datetime
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
-BRIEFINGS = OPERACAO / "briefings"
-PROGRESS = OPERACAO / "config" / "setup6_progress.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+BRIEFINGS = _P.briefings
+PROGRESS = _P.progress
 
 
 def update_progress(key, value):
@@ -28,6 +32,7 @@ def update_progress(key, value):
 
 
 def main():
+    tpa_paths.announce(_P)
     BRIEFINGS.mkdir(parents=True, exist_ok=True)
     today = datetime.now().strftime("%Y-%m-%d")
 

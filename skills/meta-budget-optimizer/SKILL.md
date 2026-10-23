@@ -5,6 +5,8 @@ model: sonnet
 effort: high
 ---
 
+> **Pasta do projeto.** `~/.operacao-ia` neste arquivo e a pasta do projeto vigente. Instalacao com um cliente so: e exatamente `~/.operacao-ia`. Com um projeto por cliente: o nome do projeto ativo esta em `~/.operacao-ia/tpa-projetos/ativo` (ou na variavel `TPA_PROJECT`, que tem prioridade) e a pasta dele e `~/.operacao-ia/tpa-projetos/<nome>/`. Troque `~/.operacao-ia` por essa pasta em todos os caminhos abaixo e rode os scripts dessa pasta. Nunca misture arquivos de dois projetos.
+
 # Meta Budget Optimizer
 
 Plano de realocação de budget entre campanhas ativas baseado em performance.

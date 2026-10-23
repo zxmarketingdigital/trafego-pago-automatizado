@@ -55,11 +55,13 @@ Roda uma vez — cria a estrutura que todos os outros modulos vao usar.
 > Execute diretamente apos o aluno digitar INICIAR SETUP — sem pedir confirmacao extra.
 
 ### Instalacao
+> **Antes de rodar:** se `~/.operacao-ia/config/meta.env` ja existir (instalacao anterior) e o aluno disser que este setup e para OUTRO cliente/conta de anuncios, crie primeiro o projeto dele: `python3 setup/tpa_projeto.py criar <nome-do-cliente>` (veja a nota da Etapa 2). Sem isso o token e a conta do cliente anterior seriam substituidos.
+
 Execute: `python3 setup/setup_base_s6.py`
 
 O script vai:
 - Detectar SO (macOS/Windows/Linux) e Python no PATH
-- Criar `~/.operacao-ia/{config,scripts/meta,dashboards,leads}/`
+- Criar `~/.operacao-ia/{config,scripts/meta,dashboards,leads}/` (ou a pasta do projeto ativo, se houver mais de um cliente)
 - Mostrar plano das 10 etapas
 
 Apos o script terminar:
@@ -150,7 +152,7 @@ O script vai perguntar:
 
 Salva em `~/.operacao-ia/config/meta_perfil.json`. Mostra resumo visual para confirmar.
 
-> ℹ️ **Se o aluno atende vários clientes ou gerencia mais de uma conta de anúncios**: a regra é **uma conta (do Claude), um projeto por cliente** — ele não precisa comprar nem instalar de novo por cliente. Mas atenção ao configurar: hoje `META_AD_ACCOUNT_ID`, o perfil e os dados do dashboard (`~/.operacao-ia/dashboards/`) ficam numa pasta única (`~/.operacao-ia/`), compartilhada entre projetos. Trocar de conta (`setup_meta_oauth.py --set-account`) sobrescreve os dados do cliente anterior no próximo fetch. Antes de configurar o segundo cliente, avise isso, peça para guardar uma cópia da pasta do primeiro e oriente a abrir um ticket em https://suporte.zxlab.com.br/hub para o passo a passo de separação por projeto. Não rode o setup de uma segunda conta por cima sem esse aviso.
+> ℹ️ **Se o aluno atende vários clientes ou gerencia mais de uma conta de anúncios**: a regra é **uma conta (do Claude), um projeto por cliente** — ele não precisa comprar nem instalar de novo por cliente. Cada cliente é um **projeto** com pasta, perfil, dashboards, porta de dashboard e agendamentos próprios; trocar de projeto nunca sobrescreve o outro. Antes de configurar um cliente que não seja o primeiro, pergunte o nome do cliente e rode você mesmo: `python3 setup/tpa_projeto.py criar <nome-do-cliente>` (cria e já ativa; o nome usa letras minúsculas, números, `-` e `_`). Depois siga as Etapas 0 a 10 normalmente — o token e o `--set-account act_<id>` ficam só naquele projeto. Para voltar a outro cliente: `python3 setup/tpa_projeto.py trocar <nome>` (`trocar default` volta ao projeto padrão, a pasta `~/.operacao-ia` de sempre); `listar` mostra projetos, contas e portas; `atual` mostra o ativo. Todo script de setup imprime `📁 Projeto: <nome>` no início — confira antes de gravar qualquer coisa. Se aparecer `TPA_PROJECT` definida, ela tem prioridade sobre o projeto ativo. `--set-account` recusa (exit 2) trocar a conta ja gravada no projeto; so use `--substituir-conta` se for corrigir a conta do MESMO cliente. Aluno de um cliente só não precisa de nada disso: o projeto padrão é `~/.operacao-ia`, como sempre.
 
 Apos o script:
 
@@ -431,7 +433,7 @@ Pronto para a Etapa 9?"
 ### O que e
 Instala 2 jobs do macOS (LaunchAgents):
 - `com.zxlab.meta-fetch` — roda fetcher 3x/dia (8h05/13h05/19h05)
-- `com.zxlab.meta-dashboard-server` — keep-alive do `localhost:8888`
+- `com.zxlab.meta-dashboard-server` — keep-alive do `localhost:8888` (projeto nomeado: label com sufixo `.<nome>` e porta própria, 8889 em diante)
 
 ### Para que serve
 Voce nao precisa lembrar de atualizar. Abre a aba e os dados ja estao frescos.
@@ -532,7 +534,7 @@ Nos vemos no proximo setup!
 - **Produto:** ZX Control — Mentoria de 30 dias (Growth 2.0)
 - **Publico:** Infoprodutores, agencias e gestores de trafego que ja dominam Meta ADS
 - **Objetivo Semana 6:** Plugar a operacao tecnica de trafego pago Meta direto no Claude Code
-- **Pasta base do aluno:** `~/.operacao-ia/`
+- **Pasta base do aluno:** `~/.operacao-ia/` (projeto padrão). Com um projeto por cliente: `~/.operacao-ia/tpa-projetos/<nome>/`, com o mesmo layout; gerencie com `python3 setup/tpa_projeto.py`. Os caminhos abaixo valem para a pasta do projeto vigente
 - **Pasta deste repositorio:** `~/zx-control-trafego-pago/` (ou onde o aluno clonou)
 - **Config Meta:** `~/.operacao-ia/config/meta.env` (preenchido na Etapa 1)
 - **Perfil de campanhas:** `~/.operacao-ia/config/meta_perfil.json` (Etapa 2)

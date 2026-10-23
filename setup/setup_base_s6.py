@@ -9,15 +9,20 @@ import shutil
 import sys
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
-CONFIG = OPERACAO / "config" / "config.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+CONFIG = _P.shared_config  # phase_completed é compartilhado entre os projetos
 
 REQUIRED_DIRS = [
-    OPERACAO / "config",
-    OPERACAO / "scripts" / "meta",
-    OPERACAO / "dashboards",
-    OPERACAO / "leads",
-    OPERACAO / "logs",
+    _P.base / "config",
+    _P.config_dir,
+    _P.scripts_meta,
+    _P.dashboards,
+    _P.leads,
+    _P.logs,
 ]
 
 ETAPAS = [
@@ -26,7 +31,7 @@ ETAPAS = [
     "E2  Questionário: Perfil de Campanhas",
     "E3  Instalar Skills + Agente Orquestrador",
     "E4  Primeira coleta de métricas",
-    "E5  Dashboard local (localhost:8888)",
+    "E5  Dashboard local (localhost:%d)" % _P.port,
     "E6  Skill: Criar Campanha",
     "E7  Skill: Briefing Criativo",
     "E8  Skills: Analyzer + Budget Optimizer",
@@ -89,6 +94,7 @@ def show_plan():
 
 def main():
     print(f"\n🔍 Diagnóstico inicial — {platform.system()} {platform.release()}\n")
+    tpa_paths.announce(_P)
     ok = all([check_python(), check_gh(), check_config()])
     if not ok:
         sys.exit(1)

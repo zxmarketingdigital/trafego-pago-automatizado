@@ -11,9 +11,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
-DASH = OPERACAO / "dashboards" / "paid-traffic-7d.json"
-PROGRESS = OPERACAO / "config" / "setup6_progress.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import tpa_paths  # noqa: E402
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+DASH = _P.dashboards / "paid-traffic-7d.json"
+PROGRESS = _P.progress
 
 
 def update_progress(key, value):
@@ -46,6 +50,7 @@ def count_qualified_ads():
 
 
 def main():
+    tpa_paths.announce(_P)
     print("🧪 Etapa 8 — Test Analyzer + Budget Optimizer")
     print("=" * 60)
     print()

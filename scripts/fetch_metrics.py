@@ -3,7 +3,7 @@
 fetch_metrics.py — coleta métricas Meta ADS adaptadas ao perfil do aluno.
 
 Como funciona:
-- Lê ~/.operacao-ia/config/meta_perfil.json (KPIs, metas, janelas, conta)
+- Lê <projeto>/config/meta_perfil.json (projeto padrão: ~/.operacao-ia) (KPIs, metas, janelas, conta)
 - Lê access token do MCP oficial Meta em ~/.claude.json
 - Para cada janela, chama Meta Graph API v21.0 (level=ad) — header Authorization
 - Faz 2ª query para campaigns (effective_status + budget atual)
@@ -11,7 +11,7 @@ Como funciona:
 - KPIs derivados (CPL, CPA, ROAS, CTR, CPM, CPC, custo/msg) calculados em cada nível
   a partir dos raws — agregação correta (sum/sum), nunca média ponderada de razões
 - Aplica decide() por ad usando limiares do perfil
-- Grava ~/.operacao-ia/dashboards/paid-traffic-{N}d.json
+- Grava <projeto>/dashboards/paid-traffic-{N}d.json
 
 Modos:
   --check   : só valida config + token presente, não chama API
@@ -27,11 +27,15 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
-OPERACAO = Path.home() / ".operacao-ia"
-PERFIL = OPERACAO / "config" / "meta_perfil.json"
-META_ENV = OPERACAO / "config" / "meta.env"
-DASH_DIR = OPERACAO / "dashboards"
-LOG = OPERACAO / "logs" / "meta-fetch.log"
+import tpa_paths
+
+# Projeto vigente (um por cliente). Sem projeto nomeado = ~/.operacao-ia como sempre.
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+PERFIL = _P.perfil
+META_ENV = _P.meta_env
+DASH_DIR = _P.dashboards
+LOG = _P.logs / "meta-fetch.log"
 
 GRAPH_BASE = "https://graph.facebook.com/v21.0"
 BRT = timezone(timedelta(hours=-3))
@@ -388,7 +392,7 @@ def main():
     args = parser.parse_args()
 
     if not PERFIL.exists():
-        print("❌ ~/.operacao-ia/config/meta_perfil.json não existe. Rode E3.")
+        print(f"❌ {PERFIL} não existe. Rode E3.")
         return 1
 
     perfil = json.loads(PERFIL.read_text())

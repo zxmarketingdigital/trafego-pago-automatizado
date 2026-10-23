@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.zxlab.meta-fetch</string>
+  <string>{LABEL}</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>{HOME}/.operacao-ia/scripts/meta/run_fetch.sh</string>
+    <string>{OPERACAO}/scripts/meta/run_fetch.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <array>
@@ -27,9 +27,9 @@
   <key>RunAtLoad</key>
   <false/>
   <key>StandardOutPath</key>
-  <string>{HOME}/.operacao-ia/logs/meta-fetch.stdout.log</string>
+  <string>{OPERACAO}/logs/meta-fetch.stdout.log</string>
   <key>StandardErrorPath</key>
-  <string>{HOME}/.operacao-ia/logs/meta-fetch.stderr.log</string>
+  <string>{OPERACAO}/logs/meta-fetch.stderr.log</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>

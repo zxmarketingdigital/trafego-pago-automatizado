@@ -11,10 +11,11 @@ from email.utils import formatdate
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import tpa_paths
 from report_formatter import assemble_report, render_html, render_text
 
 
-CONFIG_PATH = Path.home() / ".operacao-ia" / "config" / "meta.env"
+CONFIG_PATH = tpa_paths.active_paths().meta_env  # config Meta do projeto vigente
 REQUIRED_KEYS = (
     "REPORT_EMAIL_TO",
     "REPORT_EMAIL_FROM",

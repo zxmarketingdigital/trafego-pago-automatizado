@@ -2,7 +2,7 @@
 """
 paid_traffic_dashboard.py — gera HTML do dashboard a partir dos JSONs.
 
-Lê ~/.operacao-ia/dashboards/paid-traffic-{N}d.json e o template,
+Lê <projeto>/dashboards/paid-traffic-{N}d.json (padrão: ~/.operacao-ia) e o template,
 emite paid-traffic-dashboard-{N}d.html injetando JSON_DATA inline.
 """
 import json
@@ -10,9 +10,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-OPERACAO = Path.home() / ".operacao-ia"
-DASH_DIR = OPERACAO / "dashboards"
-META_DIR = OPERACAO / "scripts" / "meta"
+import tpa_paths
+
+_P = tpa_paths.active_paths()
+OPERACAO = _P.home
+DASH_DIR = _P.dashboards
+META_DIR = _P.scripts_meta
 TEMPLATE_LOCAL = META_DIR / "paid-traffic-dashboard-template.html"
 TEMPLATE_REPO  = Path(__file__).resolve().parent.parent / "docs" / "paid-traffic-dashboard-template.html"
 

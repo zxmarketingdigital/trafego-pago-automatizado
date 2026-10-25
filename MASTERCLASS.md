@@ -61,7 +61,7 @@ conversa com o Claude Code.
 - **Por que importa:** quem roda Lead não quer ver ROAS; quem roda alcance não
   quer CPL. Tudo o que vem depois se adapta a esse perfil.
 - **Demo:** responder o questionário ao vivo com um exemplo de campanha de Lead e
-  mostrar o resumo final. Reforçar: **1 conta de anúncios por instalação**.
+  mostrar o resumo final. Reforçar: **1 conta de anúncios por projeto** (cada cliente é um projeto, criado com `python3 setup/tpa_projeto.py criar <cliente>`).
 
 ### 4. Skills + agente orquestrador (Etapa 3)
 

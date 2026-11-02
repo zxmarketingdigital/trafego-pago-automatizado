@@ -51,6 +51,12 @@ class DefaultProjectIsLegacyTest(unittest.TestCase):
             tpa_paths.label_for("com.zxlab.meta-fetch", "cliente-a"), "com.zxlab.meta-fetch.cliente-a"
         )
 
+    def test_windows_task_names(self):
+        self.assertEqual(tpa_paths.win_task_name(tpa_paths.WIN_TASK_FETCH, "default"), "ZXLab Meta Fetch")
+        self.assertEqual(
+            tpa_paths.win_task_name(tpa_paths.WIN_TASK_DASH, "cliente-a"), "ZXLab Meta Dashboard - cliente-a"
+        )
+
     def test_operacao_ia_home_env_moves_the_base(self):
         with tempfile.TemporaryDirectory() as tmp:
             env = _clean_env(tmp, OPERACAO_IA_HOME=str(Path(tmp) / "outra"))

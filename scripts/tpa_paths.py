@@ -413,6 +413,55 @@ def label_for(base_label, name):
     return base_label if name == DEFAULT_NAME else "%s.%s" % (base_label, name)
 
 
+WIN_TASK_FETCH = "ZXLab Meta Fetch"
+WIN_TASK_DASH = "ZXLab Meta Dashboard"
+
+
+def win_task_name(base_task, name):
+    """Tarefa do Agendador (Windows): default usa o nome base; nomeado leva ' - <nome>'."""
+    return base_task if name == DEFAULT_NAME else "%s - %s" % (base_task, name)
+
+
+def win_task_names(p):
+    """(fetch, dashboard) do projeto `p` no Agendador de Tarefas."""
+    return win_task_name(WIN_TASK_FETCH, p.name), win_task_name(WIN_TASK_DASH, p.name)
+
+
+def ps_quote(text):
+    return "'" + str(text).replace("'", "''") + "'"
+
+
+def run_powershell(script, timeout=60):
+    import subprocess
+
+    return subprocess.run(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
+    )
+
+
+def win_task_states(names):
+    """{nome: estado} das tarefas que existem (Ready, Running, Disabled...). Busca pelo
+    nome exato: nunca casa com a tarefa de outro projeto. Erro do PowerShell -> TpaError."""
+    script = (
+        "[Console]::OutputEncoding = [Text.Encoding]::UTF8; "
+        # tarefa ausente vira ObjectNotFound: não é erro; qualquer outro erro sai com código != 0
+        "foreach ($n in @(%s)) { try { $t = Get-ScheduledTask -TaskName $n -ErrorAction Stop; "
+        "$t.TaskName + '|' + $t.State } catch { if ($_.CategoryInfo.Category -ne 'ObjectNotFound') { throw } } }; "
+        "exit 0"  # sem isso o erro tratado ainda vira código 1; o throw acima sai antes daqui
+        % ",".join(ps_quote(n) for n in names)
+    )
+    res = run_powershell(script)
+    if res.returncode != 0:
+        raise TpaError("Get-ScheduledTask falhou: %s" % (res.stderr or res.stdout).strip()[:200])
+    states = {}
+    for line in res.stdout.splitlines():
+        task, _, state = line.strip().rpartition("|")
+        if task in names:
+            states[task] = state
+    return states
+
+
 def render_plist(template_text, p, base_label, python):
     """Preenche o template de plist para o projeto `p`."""
     from xml.sax.saxutils import escape  # caminho com & < > não pode quebrar o XML do plist

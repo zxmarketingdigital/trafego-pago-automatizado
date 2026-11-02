@@ -132,25 +132,9 @@ def install_plist(name, home, python):
 
 
 # ---------------------------------------------------------------- Windows
-WIN_TASK_FETCH = "ZXLab Meta Fetch"
-WIN_TASK_DASH = "ZXLab Meta Dashboard"
 WIN_FETCH_TIMES = ("08:05", "13:05", "19:05")
-
-
-def win_task_name(base):
-    """Nome da tarefa: o projeto padrão usa o nome base; o nomeado leva ' - <nome>'."""
-    return base if _P.is_default else f"{base} - {_P.name}"
-
-
-def _ps_quote(text):
-    return "'" + str(text).replace("'", "''") + "'"
-
-
-def _run_powershell(script):
-    return subprocess.run(
-        ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
-    )
+_ps_quote = tpa_paths.ps_quote
+_run_powershell = tpa_paths.run_powershell
 
 
 def _win_action(pythonw, script):
@@ -172,7 +156,7 @@ def install_windows():
         print(f"❌ Faltando em {_P.scripts_meta}: {', '.join(missing)}")
         sys.exit(1)
 
-    fetch_name, dash_name = win_task_name(WIN_TASK_FETCH), win_task_name(WIN_TASK_DASH)
+    fetch_name, dash_name = tpa_paths.win_task_names(_P)
     times = ",".join(_ps_quote(t) for t in WIN_FETCH_TIMES)
     script = f"""
 $ErrorActionPreference = 'Stop'

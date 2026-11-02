@@ -22,7 +22,7 @@ PORT = _P.port
 def read_ad_account():
     if not META_ENV.exists():
         return "(não configurado)"
-    for line in META_ENV.read_text().splitlines():
+    for line in tpa_paths.read_text_compat(META_ENV).splitlines():
         if line.startswith("META_AD_ACCOUNT_ID="):
             return line.split("=", 1)[1].strip() or "(não configurado)"
     return "(não configurado)"
@@ -50,12 +50,12 @@ def main():
         print("❌ meta_perfil.json não existe (rode E2)")
         sys.exit(1)
 
-    cfg = json.loads(CONFIG.read_text())
+    cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
     cfg["phase_completed"] = max(cfg.get("phase_completed", 0), 6)
-    CONFIG.write_text(json.dumps(cfg, indent=2, ensure_ascii=False))
+    CONFIG.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"✅ phase_completed = {cfg['phase_completed']}")
 
-    perfil = json.loads(PERFIL.read_text())
+    perfil = json.loads(PERFIL.read_text(encoding="utf-8"))
     ad_account = read_ad_account()
     currency = perfil.get("currency") or "BRL"
     kpis_lista = ", ".join(k["key"] for k in perfil["kpis"])

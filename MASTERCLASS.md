@@ -42,7 +42,8 @@ conversa com o Claude Code.
   e a estrutura de pastas em `~/.operacao-ia/`.
 - **Por que importa:** todos os módulos seguintes gravam e leem dessas pastas.
 - **Demo:** rodar `python3 setup/check_prerequisites.py` e depois
-  `python3 setup/setup_base_s6.py`, mostrando o plano das 10 etapas.
+  `python3 setup/setup_base_s6.py`, mostrando o plano das 10 etapas. No Windows,
+  os mesmos comandos usam `python` (`python3` lá é o atalho da Microsoft Store).
 
 ### 2. Conectar o Meta (Etapa 1)
 
@@ -121,7 +122,8 @@ conversa com o Claude Code.
   coleta 3x por dia e mantém o dashboard no ar.
 - **Por que importa:** o painel se atualiza sozinho, sem o aluno lembrar de rodar
   nada.
-- **Demo:** mostrar o agendamento instalado e o horário da próxima coleta.
+- **Demo:** mostrar o agendamento instalado e o horário da próxima coleta
+  (LaunchAgents no macOS, cron no Linux, Agendador de Tarefas no Windows).
 
 ### 11. Auditoria e fechamento (Etapa 10)
 

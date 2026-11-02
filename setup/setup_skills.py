@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import tpa_paths  # noqa: E402,F401  (no Windows, deixa a saída em UTF-8)
 SKILLS_SRC = REPO_ROOT / "skills"
 SKILLS_DST = Path.home() / ".claude" / "skills"
 BACKUP_BASE = SKILLS_DST  # backups dentro da mesma raiz

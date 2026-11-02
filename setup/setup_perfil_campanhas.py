@@ -124,7 +124,7 @@ def validate_perfil(perfil):
 
 def read_env(key):
     if META_ENV.exists():
-        for line in META_ENV.read_text().splitlines():
+        for line in tpa_paths.read_text_compat(META_ENV).splitlines():
             if line.startswith(f"{key}="):
                 return line.split("=", 1)[1].strip()
     return ""
@@ -220,7 +220,7 @@ def show_summary(perfil):
 
 def write_perfil(perfil):
     PERFIL.parent.mkdir(parents=True, exist_ok=True)
-    PERFIL.write_text(json.dumps(perfil, indent=2, ensure_ascii=False))
+    PERFIL.write_text(json.dumps(perfil, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\n✅ Perfil salvo em {PERFIL}")
 
 
@@ -425,7 +425,7 @@ def cmd_apply(path):
     if not p.exists():
         print(f"❌ Arquivo não existe: {p}"); return 1
     try:
-        data = json.loads(p.read_text())
+        data = json.loads(p.read_text(encoding="utf-8"))
     except Exception as e:
         print(f"❌ JSON inválido: {e}"); return 1
     perfil = normalize(data)
@@ -444,7 +444,7 @@ def cmd_apply(path):
 def cmd_show():
     if not PERFIL.exists():
         print("Sem perfil salvo."); return 0
-    perfil = json.loads(PERFIL.read_text())
+    perfil = json.loads(PERFIL.read_text(encoding="utf-8"))
     show_summary(perfil)
     return 0
 

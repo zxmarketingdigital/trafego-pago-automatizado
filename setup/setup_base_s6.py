@@ -64,13 +64,13 @@ def check_config():
     """
     if not CONFIG.exists():
         CONFIG.parent.mkdir(parents=True, exist_ok=True)
-        CONFIG.write_text(json.dumps({"phase_completed": 0, "origem": "trafego-pago-automatizado"}, indent=2))
+        CONFIG.write_text(json.dumps({"phase_completed": 0, "origem": "trafego-pago-automatizado"}, indent=2), encoding="utf-8")
         print(f"✅ Config base criado em {CONFIG}")
         return True
     try:
-        json.loads(CONFIG.read_text())
+        json.loads(CONFIG.read_text(encoding="utf-8"))
     except Exception:
-        CONFIG.write_text(json.dumps({"phase_completed": 0, "origem": "trafego-pago-automatizado"}, indent=2))
+        CONFIG.write_text(json.dumps({"phase_completed": 0, "origem": "trafego-pago-automatizado"}, indent=2), encoding="utf-8")
         print("✅ Config base recriado (o anterior estava corrompido)")
         return True
     print("✅ Config base encontrado")

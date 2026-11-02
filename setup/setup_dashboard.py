@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Setup 6 — Etapa 5: Dashboard local
-Copia paid_traffic_dashboard.py + template HTML + start_dashboard.sh,
+Copia paid_traffic_dashboard.py + template HTML + start_dashboard.sh
+(e serve_dashboard_win.py, usado pelo Agendador de Tarefas no Windows),
 gera o HTML e abre no browser.
 """
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -24,9 +26,28 @@ PORT = _P.port  # 8888 no projeto padrão; porta própria nos projetos nomeados
 FILES = [
     (REPO_ROOT / "scripts" / "paid_traffic_dashboard.py", META_DIR / "paid_traffic_dashboard.py"),
     (REPO_ROOT / "scripts" / "start_dashboard.sh",        META_DIR / "start_dashboard.sh"),
+    (REPO_ROOT / "scripts" / "serve_dashboard_win.py",    META_DIR / "serve_dashboard_win.py"),
     (REPO_ROOT / "docs" / "paid-traffic-dashboard-template.html",
      META_DIR / "paid-traffic-dashboard-template.html"),
 ]
+
+
+def start_server_windows():
+    """Windows não tem bash: sobe o http.server direto, sem janela, com a saída no log
+    do projeto. Se a porta já está ocupada (tarefa do Agendador da Etapa 9, por
+    exemplo), não sobe outro."""
+    if not tpa_paths._port_is_free(PORT):
+        print(f"   Porta {PORT} já está em uso: o server deste projeto já deve estar rodando.")
+        return
+    _P.logs.mkdir(parents=True, exist_ok=True)
+    with open(_P.logs / "dashboard-server.log", "a", encoding="utf-8") as log:
+        subprocess.Popen(
+            [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1", "--directory", str(DASH_DIR)],
+            stdin=subprocess.DEVNULL,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
 
 
 def main():
@@ -49,17 +70,21 @@ def main():
         [sys.executable, str(META_DIR / "paid_traffic_dashboard.py")],
         capture_output=True,
         text=True,
+        encoding="utf-8",  # o filho grava UTF-8 (PYTHONUTF8 no Windows)
     )
     print(result.stdout)
     if result.returncode != 0:
         print(f"⚠️  Geração falhou: {result.stderr}")
 
     print(f"\n🌐 Iniciando server em background (localhost:{PORT})...")
-    subprocess.Popen(
-        ["bash", str(META_DIR / "start_dashboard.sh")],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    if os.name == "nt":
+        start_server_windows()
+    else:
+        subprocess.Popen(
+            ["bash", str(META_DIR / "start_dashboard.sh")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     url = f"http://localhost:{PORT}/paid-traffic-dashboard-7d.html"
     print(f"📊 Abrindo {url}")

@@ -49,6 +49,35 @@ class TpaError(Exception):
     """Erro de projeto (nome inválido, projeto inexistente, porta, etc.)."""
 
 
+# ---------------------------------------------------------------- texto (Windows)
+def _utf8_stdio():
+    """Windows: stdout/stderr redirecionados saem em cp1252 e o primeiro emoji derruba o
+    script. Força UTF-8 neles e PYTHONUTF8=1 nos subprocessos (que então gravam UTF-8
+    por padrão). macOS/Linux já são UTF-8: nada muda."""
+    if os.name != "nt":
+        return
+    os.environ.setdefault("PYTHONUTF8", "1")
+    for stream in (sys.stdout, sys.stderr):  # pythonw: os dois são None
+        if stream is not None and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
+
+
+_utf8_stdio()
+
+
+def read_text_compat(path):
+    """Lê um arquivo de texto em UTF-8 (com ou sem BOM). meta.env antigo, gravado em
+    cp1252 por versões anteriores no Windows, cai no fallback em vez de quebrar."""
+    data = Path(path).read_bytes()
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return data.decode("cp1252", errors="replace")
+
+
 # ---------------------------------------------------------------- bases
 def base_dir(env=None):
     """Pasta base: $OPERACAO_IA_HOME ou ~/.operacao-ia."""

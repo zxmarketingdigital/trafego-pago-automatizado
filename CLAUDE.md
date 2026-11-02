@@ -15,7 +15,7 @@
 >
 > Quando estiver pronto, digite: **INICIAR SETUP**"
 >
-> **Somente apos o aluno digitar INICIAR SETUP:** execute `python3 setup/setup_base_s6.py` e prossiga com a Etapa 0.
+> **Somente apos o aluno digitar INICIAR SETUP:** execute `python3 setup/setup_base_s6.py` (no Windows: `python setup/setup_base_s6.py`) e prossiga com a Etapa 0.
 
 ---
 
@@ -35,6 +35,7 @@ Voce e o instrutor de setup da Semana 6. Seu papel e instalar a operacao tecnica
 6. **Cada etapa pode ser pulada** — se o aluno disser "pular", marque no checkpoint e avance
 7. **Progress bar** — sempre mostre `[████░░░░░░] Etapa N de 10` no inicio de cada etapa
 8. **Nunca mostre tokens, API keys ou access_tokens** completos nos logs ou mensagens
+9. **Windows nativo: use `python`, nunca `python3`** — no Windows, `python3` é o atalho da Microsoft Store e não roda nada. Todo comando `python3 setup/...` deste roteiro vira `python setup/...`. Não precisa de `PYTHONUTF8` nem de WSL2: os scripts já gravam tudo em UTF-8
 
 ---
 
@@ -267,7 +268,7 @@ Execute: `python3 setup/setup_dashboard.py`
 
 O script vai:
 - Renderizar HTML a partir do template em `docs/paid-traffic-dashboard-template.html` + JSON do perfil
-- Subir `python -m http.server 8888` em background
+- Subir `python -m http.server 8888` em background (macOS/Linux via `start_dashboard.sh`; no Windows direto, sem janela, com log em `logs/dashboard-server.log`)
 - Abrir browser em `http://localhost:8888/paid-traffic-dashboard-7d.html`
 
 Apos o script:
@@ -431,7 +432,7 @@ Pronto para a Etapa 9?"
 `[█████████░] Etapa 9 de 10`
 
 ### O que e
-Instala 2 jobs do macOS (LaunchAgents):
+Instala 2 jobs do macOS (LaunchAgents) — no Windows, 2 tarefas equivalentes no Agendador de Tarefas:
 - `com.zxlab.meta-fetch` — roda fetcher 3x/dia (8h05/13h05/19h05)
 - `com.zxlab.meta-dashboard-server` — keep-alive do `localhost:8888` (projeto nomeado: label com sufixo `.<nome>` e porta própria, 8889 em diante)
 
@@ -451,6 +452,12 @@ O script vai:
 - Copiar 2 plists para `~/Library/LaunchAgents/`
 - `launchctl load` em ambos
 - Validar com `launchctl list | grep zxlab.meta` (deve retornar 2)
+
+No Windows (nativo, sem admin) o mesmo script registra no Agendador de Tarefas do usuário:
+- `ZXLab Meta Fetch` — `pythonw.exe -X utf8 <projeto>/scripts/meta/run_fetch_win.py` às 08:05, 13:05 e 19:05 (log em `logs/fetch.log`)
+- `ZXLab Meta Dashboard` — `pythonw.exe -X utf8 <projeto>/scripts/meta/serve_dashboard_win.py` ao fazer logon, reinicia a cada 1 min, sem limite de tempo
+- Projeto nomeado: nomes com sufixo ` - <nome>` e porta própria
+- Para remover: `Unregister-ScheduledTask -TaskName 'ZXLab Meta*'` no PowerShell (o uninstall ainda não remove as tarefas)
 
 Apos o script:
 

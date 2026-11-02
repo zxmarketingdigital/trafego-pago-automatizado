@@ -73,7 +73,7 @@ def log(msg):
         LOG.parent.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(BRT).isoformat(timespec="seconds")
         line = f"[{ts}] {msg}\n"
-        with LOG.open("a") as f:
+        with LOG.open("a", encoding="utf-8") as f:
             f.write(line)
     except Exception:
         pass
@@ -82,7 +82,7 @@ def log(msg):
 def read_env(key):
     if not META_ENV.exists():
         return ""
-    for line in META_ENV.read_text().splitlines():
+    for line in tpa_paths.read_text_compat(META_ENV).splitlines():
         if line.startswith(f"{key}="):
             return line.split("=", 1)[1].strip()
     return ""
@@ -395,7 +395,7 @@ def main():
         print(f"❌ {PERFIL} não existe. Rode E3.")
         return 1
 
-    perfil = json.loads(PERFIL.read_text())
+    perfil = json.loads(PERFIL.read_text(encoding="utf-8"))
     ad_account = perfil.get("ad_account_id") or read_env("META_AD_ACCOUNT_ID")
     if not ad_account or "XXXXX" in ad_account:
         print("❌ ad_account_id não configurado. Rode E2 (OAuth).")
@@ -460,7 +460,7 @@ def main():
                 "campaigns": campaigns,
             }
             outfile = DASH_DIR / f"paid-traffic-{days}d.json"
-            outfile.write_text(json.dumps(out, indent=2, ensure_ascii=False))
+            outfile.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
             print(f"✅ {outfile.name} — {len(rows)} ads, {CUR}{raws.get('spend', 0):.2f}")
             log(f"  -> {outfile.name} OK")
         except Exception as e:

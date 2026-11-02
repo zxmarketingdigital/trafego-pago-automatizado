@@ -38,7 +38,7 @@ def c_perfil():
     if not p.exists():
         return False, "meta_perfil.json não existe (rode E2)"
     try:
-        d = json.loads(p.read_text())
+        d = json.loads(p.read_text(encoding="utf-8"))
         if not d.get("kpis") or not d.get("primary_kpi"):
             return False, "Perfil inválido"
         return True, f"{len(d['kpis'])} KPIs configurados, primário={d['primary_kpi']}"
@@ -102,7 +102,7 @@ def _fetch_skipped():
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text()).get("fetch_skipped_reason")
+        return json.loads(p.read_text(encoding="utf-8")).get("fetch_skipped_reason")
     except Exception:
         return None
 
@@ -141,7 +141,7 @@ def c_phase_completed():
     if not p.exists():
         return False, "config.json base não existe"
     try:
-        cfg = json.loads(p.read_text())
+        cfg = json.loads(p.read_text(encoding="utf-8"))
         return cfg.get("phase_completed", 0) >= 5, f"phase_completed={cfg.get('phase_completed')}"
     except Exception as e:
         return False, f"Erro: {e}"
@@ -151,7 +151,7 @@ def c_meta_env():
     p = _P.meta_env
     if not p.exists():
         return False, "meta.env não criado (E1)"
-    content = p.read_text()
+    content = p.read_text(encoding="utf-8")
     if "META_AD_ACCOUNT_ID=act_" in content and "act_XXXXXXXXX" not in content:
         return True, "META_AD_ACCOUNT_ID configurado"
     return False, "META_AD_ACCOUNT_ID ainda placeholder"

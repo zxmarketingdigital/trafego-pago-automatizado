@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Setup 6 — Etapa 9: LaunchAgents (macOS)
+Setup 6 — Etapa 9: LaunchAgents (macOS) / Agendador de Tarefas (Windows)
 Instala 2 plists em ~/Library/LaunchAgents e dá launchctl load.
 Substitui os placeholders {LABEL}, {OPERACAO}, {PORT}, {HOME} e {PYTHON} no template.
+No Windows registra as 2 tarefas equivalentes no Agendador (usuário atual, sem
+admin), rodando run_fetch_win.py e serve_dashboard_win.py com `pythonw -X utf8`.
 
 Um agendamento POR PROJETO: o projeto padrão mantém os labels históricos
 (com.zxlab.meta-fetch ...); um projeto nomeado instala
@@ -86,11 +88,11 @@ def update_progress(key, value):
     data = {}
     if PROGRESS.exists():
         try:
-            data = json.loads(PROGRESS.read_text())
+            data = json.loads(PROGRESS.read_text(encoding="utf-8"))
         except Exception:
             data = {}
     data[key] = value
-    PROGRESS.write_text(json.dumps(data, indent=2))
+    PROGRESS.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def clear_progress_keys(*keys):
@@ -98,7 +100,7 @@ def clear_progress_keys(*keys):
     if not PROGRESS.exists():
         return
     try:
-        data = json.loads(PROGRESS.read_text())
+        data = json.loads(PROGRESS.read_text(encoding="utf-8"))
     except Exception:
         return
     changed = False
@@ -107,7 +109,7 @@ def clear_progress_keys(*keys):
             del data[k]
             changed = True
     if changed:
-        PROGRESS.write_text(json.dumps(data, indent=2))
+        PROGRESS.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def install_plist(name, home, python):
@@ -118,8 +120,8 @@ def install_plist(name, home, python):
     if not src.exists():
         print(f"❌ Plist faltando: {src}")
         return False
-    content = tpa_paths.render_plist(src.read_text(), _P, base_name[:-len(".plist")], python)
-    dst.write_text(content)
+    content = tpa_paths.render_plist(src.read_text(encoding="utf-8"), _P, base_name[:-len(".plist")], python)
+    dst.write_text(content, encoding="utf-8")
     print(f"✅ {dst.name}")
     subprocess.run(["launchctl", "unload", str(dst)], capture_output=True)
     result = subprocess.run(["launchctl", "load", str(dst)], capture_output=True, text=True)
@@ -129,8 +131,97 @@ def install_plist(name, home, python):
     return True
 
 
+# ---------------------------------------------------------------- Windows
+WIN_TASK_FETCH = "ZXLab Meta Fetch"
+WIN_TASK_DASH = "ZXLab Meta Dashboard"
+WIN_FETCH_TIMES = ("08:05", "13:05", "19:05")
+
+
+def win_task_name(base):
+    """Nome da tarefa: o projeto padrão usa o nome base; o nomeado leva ' - <nome>'."""
+    return base if _P.is_default else f"{base} - {_P.name}"
+
+
+def _ps_quote(text):
+    return "'" + str(text).replace("'", "''") + "'"
+
+
+def _run_powershell(script):
+    return subprocess.run(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+
+
+def _win_action(pythonw, script):
+    # -X utf8 é obrigatório: sem ele os JSON/HTML saem em cp1252 (definir PYTHONUTF8
+    # dentro do script não adianta, o modo UTF-8 é decidido na partida do Python)
+    args = f'-X utf8 "{script}"'
+    return (f"New-ScheduledTaskAction -Execute {_ps_quote(pythonw)} -Argument {_ps_quote(args)} "
+            f"-WorkingDirectory {_ps_quote(script.parent)}")
+
+
+def install_windows():
+    pythonw = Path(sys.executable).with_name("pythonw.exe")  # sem janela de console
+    if not pythonw.exists():
+        pythonw = Path(sys.executable)
+    fetch = _P.scripts_meta / "run_fetch_win.py"
+    serve = _P.scripts_meta / "serve_dashboard_win.py"
+    missing = [f"{f.name} (rode a Etapa {etapa})" for f, etapa in ((fetch, 4), (serve, 5)) if not f.exists()]
+    if missing:
+        print(f"❌ Faltando em {_P.scripts_meta}: {', '.join(missing)}")
+        sys.exit(1)
+
+    fetch_name, dash_name = win_task_name(WIN_TASK_FETCH), win_task_name(WIN_TASK_DASH)
+    times = ",".join(_ps_quote(t) for t in WIN_FETCH_TIMES)
+    script = f"""
+$ErrorActionPreference = 'Stop'
+$common = @{{ StartWhenAvailable = $true; AllowStartIfOnBatteries = $true; DontStopIfGoingOnBatteries = $true; MultipleInstances = 'IgnoreNew' }}
+$a = {_win_action(pythonw, fetch)}
+$t = @({times}) | ForEach-Object {{ New-ScheduledTaskTrigger -Daily -At $_ }}
+$s = New-ScheduledTaskSettingsSet @common -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+Register-ScheduledTask -TaskName {_ps_quote(fetch_name)} -Action $a -Trigger $t -Settings $s -Force -Description {_ps_quote(f"Tráfego Pago: coleta Meta 3x/dia ({_P.home})")} | Out-Null
+$a = {_win_action(pythonw, serve)}
+$t = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\\$env:USERNAME"
+$s = New-ScheduledTaskSettingsSet @common -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
+Register-ScheduledTask -TaskName {_ps_quote(dash_name)} -Action $a -Trigger $t -Settings $s -Force -Description {_ps_quote(f"Tráfego Pago: dashboard em http://localhost:{_P.port} ({_P.home})")} | Out-Null
+"""
+    result = _run_powershell(script)
+    if result.returncode != 0:
+        print(f"❌ Não consegui registrar as tarefas:\n{(result.stderr or result.stdout).strip()}")
+        sys.exit(1)
+    print(f"✅ {fetch_name}  — {', '.join(WIN_FETCH_TIMES)}")
+    print(f"✅ {dash_name}  — ao fazer logon, porta {_P.port} (reinicia a cada 1 min se cair)")
+    clear_progress_keys("fetch_skipped_reason", "fetch_conflict_acknowledged")
+
+    # Sobe o dashboard já, sem esperar o próximo logon. Se o server da Etapa 5 ainda está
+    # na porta, ele segue servindo; a tarefa assume no próximo logon.
+    if tpa_paths._port_is_free(_P.port):
+        _run_powershell(f"Start-ScheduledTask -TaskName {_ps_quote(dash_name)}")
+    else:
+        print(f"   Porta {_P.port} já em uso (server da Etapa 5): a tarefa assume no próximo logon.")
+
+    print("\n📋 Validando tarefas...")
+    names = ",".join(_ps_quote(n) for n in (fetch_name, dash_name))
+    check = _run_powershell(
+        f"Get-ScheduledTask -TaskName {names} -ErrorAction SilentlyContinue | "
+        "ForEach-Object { $_.TaskName + ' | ' + $_.State }"
+    )
+    found = [l for l in check.stdout.splitlines() if l.strip()]
+    for line in found:
+        print(f"   {line}")
+    if len(found) >= 2:
+        print(f"\n✅ {len(found)} tarefas registradas.")
+    else:
+        print(f"\n⚠️  Esperava 2, encontrou {len(found)}. Confira em Agendador de Tarefas > 'ZXLab Meta'.")
+    print("\nPronto para a Etapa 10 (auditoria + finalização).")
+
+
 def main():
     tpa_paths.announce(_P)
+    if platform.system() == "Windows":
+        install_windows()
+        return
     if platform.system() != "Darwin":
         print(f"⚠️  LaunchAgents é macOS-only. Você está em {platform.system()}.")
         print(f"   Pule esta etapa e agende os 2 jobs do projeto '{_P.name}' por cron (Linux ou Windows via WSL2):")
@@ -140,9 +231,6 @@ def main():
         print()
         print("   (rode 'crontab -e' e cole as 2 linhas acima — um par de linhas POR PROJETO;")
         print("    o marcador '# tpa:<nome>' no fim de cada linha diz de qual projeto ela é).")
-        print("   No Windows sem WSL2 não há")
-        print("   como agendar automaticamente — os scripts são bash; instale o WSL2")
-        print("   ('wsl --install' no PowerShell como admin) e rode o setup dentro dele.")
         sys.exit(0)
 
     plists_to_install = list(PLISTS)

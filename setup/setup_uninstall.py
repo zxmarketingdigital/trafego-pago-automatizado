@@ -127,7 +127,7 @@ def revert_phase():
         print("  - config.json: não existe")
         return
     try:
-        data = json.loads(CONFIG.read_text())
+        data = json.loads(CONFIG.read_text(encoding="utf-8"))
     except Exception as e:
         print(f"  ⚠️  config.json inválido: {e}")
         PENDENCIAS.append(f"conferir {CONFIG}: JSON inválido, phase_completed não foi revertido")
@@ -137,7 +137,7 @@ def revert_phase():
         return
     if data.get("phase_completed") == 6:
         data["phase_completed"] = 5
-        CONFIG.write_text(json.dumps(data, indent=2))
+        CONFIG.write_text(json.dumps(data, indent=2), encoding="utf-8")
         print("  ✓ phase_completed: 6 → 5")
     else:
         print(f"  - phase_completed já é {data.get('phase_completed')}")
@@ -148,7 +148,7 @@ def read_demo_campaign_ids():
     if not PROGRESS.exists():
         return []
     try:
-        return json.loads(PROGRESS.read_text()).get("demo_campaign_ids", []) or []
+        return json.loads(PROGRESS.read_text(encoding="utf-8")).get("demo_campaign_ids", []) or []
     except Exception:
         return []
 

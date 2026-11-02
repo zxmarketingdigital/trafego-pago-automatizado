@@ -30,7 +30,7 @@ def _base():
 
 def _account(p):
     try:
-        for line in p.meta_env.read_text(encoding="utf-8").splitlines():
+        for line in tpa_paths.read_text_compat(p.meta_env).splitlines():
             if line.startswith("META_AD_ACCOUNT_ID="):
                 return line.split("=", 1)[1].strip() or "-"
     except OSError:

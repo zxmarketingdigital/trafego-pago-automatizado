@@ -70,7 +70,7 @@ OPERACAO_IA_HOME={operacao_home}
 def read_env(key):
     if not META_ENV.exists():
         return ""
-    for line in META_ENV.read_text().splitlines():
+    for line in tpa_paths.read_text_compat(META_ENV).splitlines():
         if line.startswith(f"{key}="):
             return line.split("=", 1)[1].strip()
     return ""
@@ -113,7 +113,7 @@ def extract_token_from_claude_json():
     if not cj.exists():
         return None, None
     try:
-        data = json.loads(cj.read_text())
+        data = json.loads(cj.read_text(encoding="utf-8"))
     except Exception:
         return None, None
 
@@ -148,7 +148,7 @@ def write_kv(key, value):
     """Grava ou substitui um KEY=VALUE em meta.env preservando o resto."""
     META_ENV.parent.mkdir(parents=True, exist_ok=True)
     if META_ENV.exists():
-        lines = META_ENV.read_text().splitlines()
+        lines = tpa_paths.read_text_compat(META_ENV).splitlines()
         out = []
         replaced = False
         for line in lines:
@@ -159,7 +159,7 @@ def write_kv(key, value):
                 out.append(line)
         if not replaced:
             out.append(f"{key}={value}")
-        META_ENV.write_text("\n".join(out) + "\n")
+        META_ENV.write_text("\n".join(out) + "\n", encoding="utf-8")
     else:
         # Cria template novo, deixando outros campos vazios
         defaults = {"META_ACCESS_TOKEN": "", "META_AD_ACCOUNT_ID": ""}
@@ -168,7 +168,7 @@ def write_kv(key, value):
             access_token=defaults["META_ACCESS_TOKEN"],
             ad_account_id=defaults["META_AD_ACCOUNT_ID"],
             operacao_home=_BASE_STR,
-        ))
+        ), encoding="utf-8")
     # chmod 600 — token é segredo
     try:
         os.chmod(META_ENV, 0o600)

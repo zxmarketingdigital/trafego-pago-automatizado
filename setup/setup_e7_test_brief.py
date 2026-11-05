@@ -24,11 +24,11 @@ def update_progress(key, value):
     data = {}
     if PROGRESS.exists():
         try:
-            data = json.loads(PROGRESS.read_text())
+            data = json.loads(PROGRESS.read_text(encoding="utf-8"))
         except Exception:
             data = {}
     data[key] = value
-    PROGRESS.write_text(json.dumps(data, indent=2))
+    PROGRESS.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def main():

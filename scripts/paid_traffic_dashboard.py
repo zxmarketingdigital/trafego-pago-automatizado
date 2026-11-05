@@ -43,11 +43,11 @@ def main():
         print(f"❌ Nenhum JSON em {DASH_DIR}")
         sys.exit(1)
 
-    template = tpl.read_text()
+    template = tpl.read_text(encoding="utf-8")
     generated = 0
     for jf in jsons:
         try:
-            data = json.loads(jf.read_text())
+            data = json.loads(jf.read_text(encoding="utf-8"))
         except Exception as e:
             print(f"⚠️  Pulando {jf.name}: {e}")
             continue
@@ -63,7 +63,7 @@ def main():
             f"Tráfego Pago — {days}d"
         )
         out = DASH_DIR / f"paid-traffic-dashboard-{days}d.html"
-        out.write_text(html)
+        out.write_text(html, encoding="utf-8")
         print(f"✅ {out.name}")
         generated += 1
 
@@ -79,7 +79,7 @@ def main():
         days = jf.stem.replace("paid-traffic-", "").replace("d", "")
         index.append(f'<a href="paid-traffic-dashboard-{days}d.html">Janela {days}d</a>')
     index.append('</div></body></html>')
-    (DASH_DIR / "index.html").write_text("".join(index))
+    (DASH_DIR / "index.html").write_text("".join(index), encoding="utf-8")
 
     print(f"\n{generated} dashboards gerados em {DASH_DIR}")
 

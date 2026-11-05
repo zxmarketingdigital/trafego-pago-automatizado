@@ -51,6 +51,12 @@ class DefaultProjectIsLegacyTest(unittest.TestCase):
             tpa_paths.label_for("com.zxlab.meta-fetch", "cliente-a"), "com.zxlab.meta-fetch.cliente-a"
         )
 
+    def test_windows_task_names(self):
+        self.assertEqual(tpa_paths.win_task_name(tpa_paths.WIN_TASK_FETCH, "default"), "ZXLab Meta Fetch")
+        self.assertEqual(
+            tpa_paths.win_task_name(tpa_paths.WIN_TASK_DASH, "cliente-a"), "ZXLab Meta Dashboard - cliente-a"
+        )
+
     def test_operacao_ia_home_env_moves_the_base(self):
         with tempfile.TemporaryDirectory() as tmp:
             env = _clean_env(tmp, OPERACAO_IA_HOME=str(Path(tmp) / "outra"))
@@ -515,6 +521,41 @@ class SwitchingProjectsEndToEndTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         r = self._run("setup/tpa_projeto.py", "atual")
         self.assertIn("cliente-a", r.stdout)  # a troca falha nao mexeu no ativo
+
+
+class TestWinTaskOwner(unittest.TestCase):
+    def _owner(self, stdout, returncode=0):
+        res = type("R", (), {"stdout": stdout, "returncode": returncode})
+        with patch.object(tpa_paths, "run_powershell", return_value=res):
+            return tpa_paths.win_task_owner("ZXLab Meta Fetch", Path("/base/scripts/meta"))
+
+    def test_propria_instalacao(self):
+        self.assertEqual(self._owner('ACTION:-X utf8 "/base/scripts/meta/run_fetch_win.py"')[0], "mine")
+
+    def test_outra_instalacao_devolve_o_caminho(self):
+        args = '-X utf8 "/outra/scripts/meta/run_fetch_win.py"'
+        self.assertEqual(self._owner("ACTION:" + args), ("foreign", args))
+
+    def test_pasta_com_prefixo_igual_e_outra_instalacao(self):
+        self.assertEqual(self._owner('ACTION:-X utf8 "/base/scripts/meta2/run_fetch_win.py"')[0], "foreign")
+
+    def test_tarefa_ausente(self):
+        self.assertEqual(self._owner("ABSENT"), ("absent", ""))
+
+    def test_falha_de_leitura_nunca_conta_como_desta(self):
+        self.assertEqual(self._owner("", returncode=1), ("unknown", ""))
+        self.assertEqual(self._owner("ACTION:"), ("unknown", ""))
+        self.assertEqual(self._owner("lixo"), ("unknown", ""))
+        with patch.object(tpa_paths, "run_powershell", side_effect=OSError("sem powershell")):
+            self.assertEqual(tpa_paths.win_task_owner("x", Path("/base")), ("unknown", ""))
+
+
+class TestPsQuote(unittest.TestCase):
+    def test_aspas_simples_e_tipograficas_dobram(self):
+        self.assertEqual(tpa_paths.ps_quote("C:\\a b"), "'C:\\a b'")
+        self.assertEqual(tpa_paths.ps_quote("d'x"), "'d''x'")
+        for q in "\u2018\u2019\u201a\u201b":
+            self.assertEqual(tpa_paths.ps_quote("a" + q + "b"), "'a" + q + q + "b'")
 
 
 if __name__ == "__main__":

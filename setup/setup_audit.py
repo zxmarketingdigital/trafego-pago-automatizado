@@ -38,7 +38,7 @@ def c_perfil():
     if not p.exists():
         return False, "meta_perfil.json não existe (rode E2)"
     try:
-        d = json.loads(p.read_text())
+        d = json.loads(p.read_text(encoding="utf-8"))
         if not d.get("kpis") or not d.get("primary_kpi"):
             return False, "Perfil inválido"
         return True, f"{len(d['kpis'])} KPIs configurados, primário={d['primary_kpi']}"
@@ -102,12 +102,41 @@ def _fetch_skipped():
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text()).get("fetch_skipped_reason")
+        return json.loads(p.read_text(encoding="utf-8")).get("fetch_skipped_reason")
     except Exception:
         return None
 
 
+def _expected_win_tasks():
+    """Tarefas do Agendador esperadas para ESTE projeto (fetch sai se foi pulado)."""
+    skip = _fetch_skipped()
+    fetch_name, dash_name = tpa_paths.win_task_names(_P)
+    return ([dash_name] if skip else [fetch_name, dash_name]), skip
+
+
+def c_win_tasks_registered():
+    expected, skip = _expected_win_tasks()
+    states = tpa_paths.win_task_states(expected)
+    missing = [n for n in expected if n not in states]
+    if missing:
+        return False, f"Faltando no Agendador: {missing} (rode E9)"
+    suffix = f" (fetch pulado: {skip})" if skip else ""
+    return True, f"{len(expected)} tarefa(s) registrada(s){suffix}"
+
+
+def c_win_tasks_enabled():
+    expected, skip = _expected_win_tasks()
+    states = tpa_paths.win_task_states(expected)
+    bad = {n: states.get(n, "ausente") for n in expected if states.get(n) not in ("Ready", "Running", "Queued")}
+    if bad:
+        return False, "Tarefa(s) fora do ar: " + ", ".join(f"{n}={s}" for n, s in bad.items())
+    suffix = f" (fetch pulado: {skip})" if skip else ""
+    return True, ", ".join(f"{n}={states[n]}" for n in expected) + suffix
+
+
 def c_launchagents_files():
+    if platform.system() == "Windows":
+        return c_win_tasks_registered()
     if platform.system() != "Darwin":
         return True, "macOS-only — pulado"
     skip = _fetch_skipped()
@@ -122,6 +151,8 @@ def c_launchagents_files():
 
 
 def c_launchagents_loaded():
+    if platform.system() == "Windows":
+        return c_win_tasks_enabled()
     if platform.system() != "Darwin":
         return True, "macOS-only — pulado"
     skip = _fetch_skipped()
@@ -141,7 +172,7 @@ def c_phase_completed():
     if not p.exists():
         return False, "config.json base não existe"
     try:
-        cfg = json.loads(p.read_text())
+        cfg = json.loads(p.read_text(encoding="utf-8"))
         return cfg.get("phase_completed", 0) >= 5, f"phase_completed={cfg.get('phase_completed')}"
     except Exception as e:
         return False, f"Erro: {e}"
@@ -151,7 +182,7 @@ def c_meta_env():
     p = _P.meta_env
     if not p.exists():
         return False, "meta.env não criado (E1)"
-    content = p.read_text()
+    content = p.read_text(encoding="utf-8")
     if "META_AD_ACCOUNT_ID=act_" in content and "act_XXXXXXXXX" not in content:
         return True, "META_AD_ACCOUNT_ID configurado"
     return False, "META_AD_ACCOUNT_ID ainda placeholder"
@@ -175,8 +206,12 @@ def main():
     check("dashboard generator copiado",c_dashboard_script)
     check("Dashboards JSON gerados",    c_dashboards)
     check("Dashboards HTML gerados",    c_dashboard_html)
-    check("LaunchAgents instalados",    c_launchagents_files)
-    check("LaunchAgents ativos",        c_launchagents_loaded)
+    if platform.system() == "Windows":
+        check("Tarefas do Agendador",       c_launchagents_files)
+        check("Tarefas habilitadas",        c_launchagents_loaded)
+    else:
+        check("LaunchAgents instalados",    c_launchagents_files)
+        check("LaunchAgents ativos",        c_launchagents_loaded)
     check(f"Server localhost:{PORT}",      c_server_running)
 
     passed = sum(1 for _, ok, _ in CHECKS if ok)

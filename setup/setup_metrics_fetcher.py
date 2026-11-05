@@ -19,6 +19,8 @@ SCRIPT_SRC = REPO_ROOT / "scripts" / "fetch_metrics.py"
 SCRIPT_DST = _P.scripts_meta / "fetch_metrics.py"
 RUNNER_SRC = REPO_ROOT / "scripts" / "run_fetch.sh"
 RUNNER_DST = _P.scripts_meta / "run_fetch.sh"
+WIN_RUNNER_SRC = REPO_ROOT / "scripts" / "run_fetch_win.py"  # Agendador de Tarefas (Etapa 9 no Windows)
+WIN_RUNNER_DST = _P.scripts_meta / "run_fetch_win.py"
 PERFIL = _P.perfil
 DASH_DIR = _P.dashboards
 
@@ -40,11 +42,16 @@ def main():
         RUNNER_DST.chmod(0o755)
         print(f"✅ run_fetch.sh copiado para {RUNNER_DST}")
 
+    if WIN_RUNNER_SRC.exists():
+        shutil.copy2(WIN_RUNNER_SRC, WIN_RUNNER_DST)
+        print(f"✅ run_fetch_win.py copiado para {WIN_RUNNER_DST}")
+
     print("\n🔄 Executando primeira coleta...")
     result = subprocess.run(
         [sys.executable, str(SCRIPT_DST), "--check"],
         capture_output=True,
         text=True,
+        encoding="utf-8",  # o filho grava UTF-8 (PYTHONUTF8 no Windows)
     )
     print(result.stdout)
     if result.returncode != 0:
@@ -55,6 +62,7 @@ def main():
         [sys.executable, str(SCRIPT_DST)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     print(result.stdout)
     if result.returncode != 0:
@@ -62,7 +70,7 @@ def main():
         sys.exit(1)
 
     DASH_DIR.mkdir(parents=True, exist_ok=True)
-    perfil = json.loads(PERFIL.read_text())
+    perfil = json.loads(PERFIL.read_text(encoding="utf-8"))
     windows = perfil.get("windows", [4, 7, 14, 30])
 
     found = []

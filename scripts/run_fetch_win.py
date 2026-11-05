@@ -19,8 +19,10 @@ sys.path.insert(0, str(HERE))
 _SEGREDO = re.compile(
     r"""((?:access_token|fb_exchange_token|client_secret)(?:\\*['"])?[ \t]*(?:[=:]|%3[Dd])[ \t]*(?:\\*['"])?)[^&\s'",}\\]+"""
 )
-_TOKEN_META = re.compile(r"\bEAA[A-Za-z0-9]{20,}")
-_TOKEN_META_INCOMPLETO = re.compile(r"\bEAA[A-Za-z0-9]*\Z")
+# Sem \b de propósito: em %3DEAA... ou conta_EAA... não há fronteira de palavra antes do
+# token. Mascarar a mais no log é aceitável; vazar não é.
+_TOKEN_META = re.compile(r"EAA[A-Za-z0-9]{20,}")
+_TOKEN_META_INCOMPLETO = re.compile(r"EAA[A-Za-z0-9]*\Z")
 
 
 def _mascarar(text):

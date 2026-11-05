@@ -73,6 +73,12 @@ class TestLogDoFetch(unittest.TestCase):
         self.assertNotIn(cru, log)
         self.assertIn("EAA***", log)
 
+    def test_token_meta_colado_em_outro_texto_e_mascarado(self):
+        cru = "EAA" + "b1" * 20
+        _, log = self._rodar("print('u?input_token%%3D%s')\nprint('conta_%s')\nprint('conta%s')\n" % (cru, cru, cru))
+        self.assertNotIn(cru, log)
+        self.assertEqual(log.count("EAA***"), 3)
+
     def test_linha_sem_quebra_no_fim_chega_ao_log(self):
         _, log = self._rodar("import sys\nsys.stdout.write('ultima linha access_token=%s')\n" % TOKEN)
         self.assertIn("ultima linha access_token=***", log)

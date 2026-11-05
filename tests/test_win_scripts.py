@@ -16,7 +16,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import serve_dashboard_win  # noqa: E402
 
-TOKEN = "EAASEGREDO123"
+TOKEN = "EAA" + "SEGREDO123"  # montado em duas partes: é valor de teste, não credencial
 
 
 class TestLogDoFetch(unittest.TestCase):

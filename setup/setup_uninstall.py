@@ -92,6 +92,11 @@ def unregister_windows_tasks():
         if name not in present:
             print(f"  - Tarefa '{name}': já removida")
             continue
+        foreign = tpa_paths.win_task_foreign(name, META_SCRIPTS)
+        if foreign:
+            print(f"  ✗ Tarefa '{name}': roda outra instalação ({foreign[:120]}); mantida")
+            PENDENCIAS.append(f"conferir a tarefa '{name}': ela não roda esta instalação")
+            continue
         q = tpa_paths.ps_quote(name)
         res = tpa_paths.run_powershell(
             f"$ErrorActionPreference = 'Stop'; Stop-ScheduledTask -TaskName {q}; "

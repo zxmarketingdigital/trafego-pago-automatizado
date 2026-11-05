@@ -157,6 +157,10 @@ def install_windows():
         sys.exit(1)
 
     fetch_name, dash_name = tpa_paths.win_task_names(_P)
+    for name in (fetch_name, dash_name):
+        foreign = tpa_paths.win_task_foreign(name, _P.scripts_meta)
+        if foreign:
+            print(f"⚠️  A tarefa '{name}' rodava outra instalação ({foreign[:120]}): passa a rodar esta, e a outra para.")
     times = ",".join(_ps_quote(t) for t in WIN_FETCH_TIMES)
     script = f"""
 $ErrorActionPreference = 'Stop'

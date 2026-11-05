@@ -441,6 +441,23 @@ def run_powershell(script, timeout=60):
     )
 
 
+def win_task_foreign(name, scripts_dir):
+    """Argumentos da tarefa `name` quando ela roda OUTRA instalação (mesmo nome de projeto,
+    pasta diferente); "" quando é desta, não existe ou não deu para ler."""
+    script = (
+        "[Console]::OutputEncoding = [Text.Encoding]::UTF8; "
+        "(Get-ScheduledTask -TaskName %s -ErrorAction Stop).Actions[0].Arguments" % ps_quote(name)
+    )
+    try:
+        res = run_powershell(script)
+    except Exception:  # noqa: BLE001
+        return ""
+    action = res.stdout.strip() if res.returncode == 0 else ""
+    if not action or os.path.join(str(scripts_dir), "").lower() in action.lower():
+        return ""
+    return action
+
+
 def win_task_states(names):
     """{nome: estado} das tarefas que existem (Ready, Running, Disabled...). Busca pelo
     nome exato: nunca casa com a tarefa de outro projeto. Erro do PowerShell -> TpaError."""

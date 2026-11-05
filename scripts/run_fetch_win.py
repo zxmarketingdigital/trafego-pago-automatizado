@@ -14,10 +14,27 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+_SEGREDO = re.compile(r"(access_token|fb_exchange_token|client_secret)=[^&\s'\"]+")
+
+
+class _LogMascarado:
+    """Log que mascara token em tudo que passa por ele: print dos scripts, código do
+    SystemExit, repr de erro de rede e traceback. A URL da Graph API traz o token."""
+
+    def __init__(self, f):
+        self._f = f
+
+    def write(self, text):
+        return self._f.write(_SEGREDO.sub(r"\1=***", text))
+
+    def __getattr__(self, name):
+        return getattr(self._f, name)
+
+
 # <projeto>/scripts/meta -> <projeto>/logs; aberto antes de tudo para nenhum erro sumir
 log_dir = HERE.parent.parent / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
-log = open(log_dir / "fetch.log", "a", encoding="utf-8")
+log = _LogMascarado(open(log_dir / "fetch.log", "a", encoding="utf-8"))
 sys.stdout = sys.stderr = log
 
 print(f"\n[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] fetch", flush=True)
@@ -40,9 +57,7 @@ for script in ("fetch_metrics.py", "paid_traffic_dashboard.py"):
             rc = 1
             break
     except Exception as e:  # noqa: BLE001
-        # erro de rede traz a URL no repr, e a URL da Graph API traz o token
-        msg = re.sub(r"(access_token|fb_exchange_token|client_secret)=[^&\s'\"]+", r"\1=***", repr(e))
-        print(f"❌ {script}: {msg}", flush=True)
+        print(f"❌ {script}: {e!r}", flush=True)
         rc = 1
         break
 log.flush()

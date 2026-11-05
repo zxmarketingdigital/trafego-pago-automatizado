@@ -523,6 +523,29 @@ class SwitchingProjectsEndToEndTest(unittest.TestCase):
         self.assertIn("cliente-a", r.stdout)  # a troca falha nao mexeu no ativo
 
 
+class TestWinTaskForeign(unittest.TestCase):
+    def _foreign(self, stdout, returncode=0):
+        res = type("R", (), {"stdout": stdout, "returncode": returncode})
+        with patch.object(tpa_paths, "run_powershell", return_value=res):
+            return tpa_paths.win_task_foreign("ZXLab Meta Fetch", Path("/base/scripts/meta"))
+
+    def test_propria_instalacao_nao_e_estranha(self):
+        self.assertEqual(self._foreign('-X utf8 "/base/scripts/meta/run_fetch_win.py"'), "")
+
+    def test_outra_instalacao_devolve_o_caminho(self):
+        args = '-X utf8 "/outra/scripts/meta/run_fetch_win.py"'
+        self.assertEqual(self._foreign(args), args)
+
+    def test_pasta_com_prefixo_igual_e_outra_instalacao(self):
+        args = '-X utf8 "/base/scripts/meta2/run_fetch_win.py"'
+        self.assertEqual(self._foreign(args), args)
+
+    def test_tarefa_ausente_ou_erro_nao_e_estranha(self):
+        self.assertEqual(self._foreign("", returncode=1), "")
+        with patch.object(tpa_paths, "run_powershell", side_effect=OSError("sem powershell")):
+            self.assertEqual(tpa_paths.win_task_foreign("x", Path("/base")), "")
+
+
 class TestPsQuote(unittest.TestCase):
     def test_aspas_simples_e_tipograficas_dobram(self):
         self.assertEqual(tpa_paths.ps_quote("C:\\a b"), "'C:\\a b'")

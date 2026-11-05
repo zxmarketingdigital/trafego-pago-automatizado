@@ -15,7 +15,14 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-_SEGREDO = re.compile(r"""((?:access_token|fb_exchange_token|client_secret)['"]?[ \t]*[=:][ \t]*['"]?)[^&\s'",}]+""")
+_SEGREDO = re.compile(
+    r"""((?:access_token|fb_exchange_token|client_secret)(?:\\*['"])?[ \t]*(?:[=:]|%3[Dd])[ \t]*(?:\\*['"])?)[^&\s'",}\\]+"""
+)
+_TOKEN_META = re.compile(r"\bEAA[A-Za-z0-9]{20,}")
+
+
+def _mascarar(text):
+    return _TOKEN_META.sub("EAA***", _SEGREDO.sub(r"\1***", text))
 
 
 class _LogMascarado:
@@ -33,12 +40,13 @@ class _LogMascarado:
         self._pendente += text
         linhas, fim, resto = self._pendente.rpartition("\n")
         if fim:
-            self._f.write(_SEGREDO.sub(r"\1***", linhas + fim))
+            self._f.write(_mascarar(linhas + fim))
+            self._f.flush()  # o Agendador mata a tarefa no tempo limite: o que já saiu fica no log
             self._pendente = resto
         return len(text)
 
     def fechar(self):
-        self._f.write(_SEGREDO.sub(r"\1***", self._pendente))
+        self._f.write(_mascarar(self._pendente))
         self._pendente = ""
         self._f.flush()
 

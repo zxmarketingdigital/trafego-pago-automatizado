@@ -60,6 +60,19 @@ class TestLogDoFetch(unittest.TestCase):
         self.assertNotIn(TOKEN, log)
         self.assertEqual(log.count("***"), 2)
 
+    def test_json_aninhado_e_url_encoded_mascarados(self):
+        _, log = self._rodar(
+            "import json\nprint(json.dumps({'corpo': json.dumps({'access_token': '%s'})}))\n"
+            "print('x?access_token%%3D%s&y=1')\n" % (TOKEN, TOKEN)
+        )
+        self.assertNotIn(TOKEN, log)
+
+    def test_token_meta_sem_chave_ao_lado_e_mascarado(self):
+        cru = "EAA" + "b1" * 20
+        _, log = self._rodar("print('resposta', '%s')\n" % cru)
+        self.assertNotIn(cru, log)
+        self.assertIn("EAA***", log)
+
     def test_linha_sem_quebra_no_fim_chega_ao_log(self):
         _, log = self._rodar("import sys\nsys.stdout.write('ultima linha access_token=%s')\n" % TOKEN)
         self.assertIn("ultima linha access_token=***", log)

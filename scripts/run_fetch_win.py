@@ -79,7 +79,9 @@ class _LogMascarado:
         return getattr(self._f, name)
 
 
-# <projeto>/scripts/meta -> <projeto>/logs; aberto antes de tudo para nenhum erro sumir
+# <projeto>/scripts/meta -> <projeto>/logs; aberto antes de tudo para os erros irem ao log.
+# Se o próprio log não abrir (sem permissão em logs/), a tarefa morre aqui com código 1 e o
+# Agendador mostra esse código: sem log não há como auditar a coleta, então não seguimos.
 log_dir = HERE.parent.parent / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
 log = _LogMascarado(open(log_dir / "fetch.log", "a", encoding="utf-8"))

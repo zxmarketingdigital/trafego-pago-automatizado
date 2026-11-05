@@ -78,6 +78,36 @@ class TestLogDoFetch(unittest.TestCase):
         self.assertIn("ultima linha access_token=***", log)
         self.assertNotIn(TOKEN, log)
 
+    def test_falha_de_escrita_no_log_nao_derruba_a_coleta(self):
+        rc, log = self._rodar(
+            "import sys\n"
+            "class Quebrado:\n"
+            "    def write(self, t):\n        raise OSError('disco cheio')\n"
+            "    def flush(self):\n        raise OSError('disco cheio')\n"
+            "antes = sys.stdout._f\nsys.stdout._f = Quebrado()\n"
+            "print('linha perdida')\nsys.stdout._f = antes\n"
+        )
+        self.assertEqual(rc, 0)
+        self.assertNotIn("linha perdida", log)
+        self.assertIn("dashboard ok", log)
+
+    def test_erro_com_log_quebrado_ainda_sai_com_codigo_1(self):
+        rc, _ = self._rodar(
+            "import sys\n"
+            "class Quebrado:\n"
+            "    def write(self, t):\n        raise OSError('disco cheio')\n"
+            "    def flush(self):\n        raise OSError('disco cheio')\n"
+            "sys.stdout._f = Quebrado()\nraise RuntimeError('falhou')\n"
+        )
+        self.assertEqual(rc, 1)
+
+    def test_flush_grava_linha_sem_quebra_antes_de_matarem_a_tarefa(self):
+        _, log = self._rodar(
+            "import os\nprint('coletando conta 3 access_token=%s', end='', flush=True)\nos._exit(9)\n" % TOKEN
+        )
+        self.assertIn("coletando conta 3 access_token=***", log)
+        self.assertNotIn(TOKEN, log)
+
     def test_sucesso_roda_os_dois_scripts(self):
         rc, log = self._rodar("print('fetch ok')\n")
         self.assertEqual(rc, 0)

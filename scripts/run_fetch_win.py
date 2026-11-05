@@ -40,15 +40,24 @@ class _LogMascarado:
         self._pendente += text
         linhas, fim, resto = self._pendente.rpartition("\n")
         if fim:
-            self._f.write(_mascarar(linhas + fim))
-            self._f.flush()  # o Agendador mata a tarefa no tempo limite: o que já saiu fica no log
             self._pendente = resto
+            self._gravar(linhas + fim)
         return len(text)
 
-    def fechar(self):
-        self._f.write(_mascarar(self._pendente))
-        self._pendente = ""
-        self._f.flush()
+    def flush(self):
+        """Grava também a linha ainda sem quebra: o Agendador mata a tarefa no tempo
+        limite e o atexit não roda, então o que passou por flush já fica no log."""
+        pendente, self._pendente = self._pendente, ""
+        self._gravar(pendente)
+
+    def _gravar(self, text):
+        # Log não pode derrubar a coleta: com disco cheio a linha se perde, mas os
+        # scripts seguem e o código de saída continua avisando o Agendador.
+        try:
+            self._f.write(_mascarar(text))
+            self._f.flush()
+        except (OSError, ValueError):
+            pass
 
     def __getattr__(self, name):
         return getattr(self._f, name)
@@ -59,7 +68,7 @@ log_dir = HERE.parent.parent / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
 log = _LogMascarado(open(log_dir / "fetch.log", "a", encoding="utf-8"))
 sys.stdout = sys.stderr = log
-atexit.register(log.fechar)
+atexit.register(log.flush)
 
 print(f"\n[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] fetch", flush=True)
 if not sys.flags.utf8_mode:

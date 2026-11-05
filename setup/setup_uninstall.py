@@ -92,10 +92,14 @@ def unregister_windows_tasks():
         if name not in present:
             print(f"  - Tarefa '{name}': já removida")
             continue
-        foreign = tpa_paths.win_task_foreign(name, META_SCRIPTS)
-        if foreign:
-            print(f"  ✗ Tarefa '{name}': roda outra instalação ({foreign[:120]}); mantida")
-            PENDENCIAS.append(f"conferir a tarefa '{name}': ela não roda esta instalação")
+        owner, action = tpa_paths.win_task_owner(name, META_SCRIPTS)
+        if owner == "absent":
+            print(f"  - Tarefa '{name}': já removida")
+            continue
+        if owner != "mine":
+            motivo = f"roda outra instalação ({action[:120]})" if owner == "foreign" else "não consegui conferir de quem é"
+            print(f"  ✗ Tarefa '{name}': {motivo}; mantida")
+            PENDENCIAS.append(f"conferir a tarefa '{name}' no Agendador de Tarefas: {motivo}")
             continue
         q = tpa_paths.ps_quote(name)
         res = tpa_paths.run_powershell(

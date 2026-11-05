@@ -49,6 +49,22 @@ class TestLogDoFetch(unittest.TestCase):
         self.assertIn("fb_exchange_token=***", log)
         self.assertIn("client_secret=***", log)
 
+    def test_valor_em_write_separado_e_mascarado(self):
+        _, log = self._rodar("print('access_token=', '%s')\n" % TOKEN)
+        self.assertNotIn(TOKEN, log)
+
+    def test_formato_de_dict_e_json_mascarados(self):
+        _, log = self._rodar(
+            "print({'access_token': '%s'})\nprint('{\"client_secret\": \"%s\"}')\n" % (TOKEN, TOKEN)
+        )
+        self.assertNotIn(TOKEN, log)
+        self.assertEqual(log.count("***"), 2)
+
+    def test_linha_sem_quebra_no_fim_chega_ao_log(self):
+        _, log = self._rodar("import sys\nsys.stdout.write('ultima linha access_token=%s')\n" % TOKEN)
+        self.assertIn("ultima linha access_token=***", log)
+        self.assertNotIn(TOKEN, log)
+
     def test_sucesso_roda_os_dois_scripts(self):
         rc, log = self._rodar("print('fetch ok')\n")
         self.assertEqual(rc, 0)

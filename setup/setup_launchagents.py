@@ -158,9 +158,12 @@ def install_windows():
 
     fetch_name, dash_name = tpa_paths.win_task_names(_P)
     for name in (fetch_name, dash_name):
-        foreign = tpa_paths.win_task_foreign(name, _P.scripts_meta)
-        if foreign:
-            print(f"⚠️  A tarefa '{name}' rodava outra instalação ({foreign[:120]}): passa a rodar esta, e a outra para.")
+        owner, action = tpa_paths.win_task_owner(name, _P.scripts_meta)
+        if owner == "foreign":
+            print(f"⚠️  A tarefa '{name}' rodava outra instalação ({action[:120]}): passa a rodar esta. "
+                  "O que já estiver em execução da outra pasta segue até ser encerrado.")
+        elif owner == "unknown":
+            print(f"⚠️  Não consegui conferir a tarefa '{name}': se ela existir, passa a rodar esta instalação.")
     times = ",".join(_ps_quote(t) for t in WIN_FETCH_TIMES)
     script = f"""
 $ErrorActionPreference = 'Stop'

@@ -523,27 +523,31 @@ class SwitchingProjectsEndToEndTest(unittest.TestCase):
         self.assertIn("cliente-a", r.stdout)  # a troca falha nao mexeu no ativo
 
 
-class TestWinTaskForeign(unittest.TestCase):
-    def _foreign(self, stdout, returncode=0):
+class TestWinTaskOwner(unittest.TestCase):
+    def _owner(self, stdout, returncode=0):
         res = type("R", (), {"stdout": stdout, "returncode": returncode})
         with patch.object(tpa_paths, "run_powershell", return_value=res):
-            return tpa_paths.win_task_foreign("ZXLab Meta Fetch", Path("/base/scripts/meta"))
+            return tpa_paths.win_task_owner("ZXLab Meta Fetch", Path("/base/scripts/meta"))
 
-    def test_propria_instalacao_nao_e_estranha(self):
-        self.assertEqual(self._foreign('-X utf8 "/base/scripts/meta/run_fetch_win.py"'), "")
+    def test_propria_instalacao(self):
+        self.assertEqual(self._owner('ACTION:-X utf8 "/base/scripts/meta/run_fetch_win.py"')[0], "mine")
 
     def test_outra_instalacao_devolve_o_caminho(self):
         args = '-X utf8 "/outra/scripts/meta/run_fetch_win.py"'
-        self.assertEqual(self._foreign(args), args)
+        self.assertEqual(self._owner("ACTION:" + args), ("foreign", args))
 
     def test_pasta_com_prefixo_igual_e_outra_instalacao(self):
-        args = '-X utf8 "/base/scripts/meta2/run_fetch_win.py"'
-        self.assertEqual(self._foreign(args), args)
+        self.assertEqual(self._owner('ACTION:-X utf8 "/base/scripts/meta2/run_fetch_win.py"')[0], "foreign")
 
-    def test_tarefa_ausente_ou_erro_nao_e_estranha(self):
-        self.assertEqual(self._foreign("", returncode=1), "")
+    def test_tarefa_ausente(self):
+        self.assertEqual(self._owner("ABSENT"), ("absent", ""))
+
+    def test_falha_de_leitura_nunca_conta_como_desta(self):
+        self.assertEqual(self._owner("", returncode=1), ("unknown", ""))
+        self.assertEqual(self._owner("ACTION:"), ("unknown", ""))
+        self.assertEqual(self._owner("lixo"), ("unknown", ""))
         with patch.object(tpa_paths, "run_powershell", side_effect=OSError("sem powershell")):
-            self.assertEqual(tpa_paths.win_task_foreign("x", Path("/base")), "")
+            self.assertEqual(tpa_paths.win_task_owner("x", Path("/base")), ("unknown", ""))
 
 
 class TestPsQuote(unittest.TestCase):

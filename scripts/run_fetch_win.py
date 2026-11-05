@@ -5,6 +5,7 @@ Roda no projeto onde esta cópia mora (tpa_paths.py ao lado): coleta as métrica
 Pensado para rodar com `pythonw.exe -X utf8` (sem janela; sem -X utf8 os scripts
 gravam os JSON/HTML em cp1252). A saída vai para logs/fetch.log.
 """
+import atexit
 import datetime
 import re
 import runpy
@@ -14,18 +15,32 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-_SEGREDO = re.compile(r"(access_token|fb_exchange_token|client_secret)=[^&\s'\"]+")
+_SEGREDO = re.compile(r"""((?:access_token|fb_exchange_token|client_secret)['"]?[ \t]*[=:][ \t]*['"]?)[^&\s'",}]+""")
 
 
 class _LogMascarado:
     """Log que mascara token em tudo que passa por ele: print dos scripts, código do
-    SystemExit, repr de erro de rede e traceback. A URL da Graph API traz o token."""
+    SystemExit, repr de erro de rede e traceback. A URL da Graph API traz o token.
+
+    Grava por linha inteira porque print(a, b) chega em vários write(): mascarar cada
+    pedaço deixaria passar o valor separado da chave."""
 
     def __init__(self, f):
         self._f = f
+        self._pendente = ""
 
     def write(self, text):
-        return self._f.write(_SEGREDO.sub(r"\1=***", text))
+        self._pendente += text
+        linhas, fim, resto = self._pendente.rpartition("\n")
+        if fim:
+            self._f.write(_SEGREDO.sub(r"\1***", linhas + fim))
+            self._pendente = resto
+        return len(text)
+
+    def fechar(self):
+        self._f.write(_SEGREDO.sub(r"\1***", self._pendente))
+        self._pendente = ""
+        self._f.flush()
 
     def __getattr__(self, name):
         return getattr(self._f, name)
@@ -36,6 +51,7 @@ log_dir = HERE.parent.parent / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
 log = _LogMascarado(open(log_dir / "fetch.log", "a", encoding="utf-8"))
 sys.stdout = sys.stderr = log
+atexit.register(log.fechar)
 
 print(f"\n[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] fetch", flush=True)
 if not sys.flags.utf8_mode:
@@ -60,5 +76,4 @@ for script in ("fetch_metrics.py", "paid_traffic_dashboard.py"):
         print(f"❌ {script}: {e!r}", flush=True)
         rc = 1
         break
-log.flush()
 sys.exit(rc)

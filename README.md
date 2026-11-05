@@ -61,14 +61,14 @@ zx-control-trafego-pago/
 ## Limitações conhecidas
 
 - **MCP oficial Meta com rollout gradual**: nem toda conta tem `is_ads_mcp_enabled=true`. Setup detecta e oferece fallback via System User Token (`setup_meta_oauth.py --renew`).
-- **Windows nativo**: a Etapa 9 registra 2 tarefas no Agendador de Tarefas do usuário (sem admin): `ZXLab Meta Fetch` (08:05/13:05/19:05) e `ZXLab Meta Dashboard` (ao fazer logon, reinicia a cada 1 min), rodando `run_fetch_win.py` e `serve_dashboard_win.py` com `pythonw -X utf8`. Em projeto nomeado os nomes ganham ` - <nome>`. O uninstall ainda não remove essas tarefas: apague-as no Agendador ou com `Unregister-ScheduledTask -TaskName 'ZXLab Meta*'`.
+- **Windows nativo**: a Etapa 9 registra 2 tarefas no Agendador de Tarefas do usuário (sem admin): `ZXLab Meta Fetch` (08:05/13:05/19:05) e `ZXLab Meta Dashboard` (ao fazer logon, reinicia a cada 1 min), rodando `run_fetch_win.py` e `serve_dashboard_win.py` com `pythonw -X utf8`. Em projeto nomeado os nomes ganham ` - <nome>`. O `setup/setup_uninstall.py` remove as tarefas do projeto vigente.
 - **LaunchAgents só macOS**: no Linux (e no WSL2, se preferir rodar o setup lá) agende com cron. Etapa 9 detecta SO e imprime as linhas prontas. Agende os dois jobs com `crontab -e`:
   ```
   5 8,13,19 * * * /bin/bash $HOME/.operacao-ia/scripts/meta/run_fetch.sh >> $HOME/.operacao-ia/logs/meta-fetch.cron.log 2>&1
   @reboot /bin/bash $HOME/.operacao-ia/scripts/meta/start_dashboard.sh
   ```
   (A Etapa 9 imprime essas linhas já prontas para o seu projeto. Em projeto nomeado, o caminho vira `$HOME/.operacao-ia/tpa-projetos/<nome>/scripts/meta/...` e cada linha termina com `# tpa:<nome>`; um projeto por vez, sem misturar.)
-  O `@reboot` só dispara quando o WSL2 é iniciado (não junto com o Windows) — se preferir o dashboard sempre no ar, rode `bash ~/.operacao-ia/scripts/meta/start_dashboard.sh &` manualmente após abrir o WSL2, ou crie uma Tarefa Básica no Windows Task Scheduler que execute `wsl bash ~/.operacao-ia/scripts/meta/start_dashboard.sh` no logon.
+  No WSL2, o `@reboot` só dispara quando o WSL2 é iniciado (não junto com o Windows): rode `bash ~/.operacao-ia/scripts/meta/start_dashboard.sh &` depois de abrir o WSL2. No Windows nativo isso não se aplica, porque a tarefa `ZXLab Meta Dashboard` já sobe o dashboard no logon.
 - **Pixel ZX LAB hardcoded em demo**: aluno deve substituir pelo pixel próprio em E1 — setup pergunta.
 - **Conflito com creative-roas-dashboard**: se aluno tem outro fetcher Meta rodando, E9 detecta e oferece pular meta-fetch.plist (evita duplicar chamadas API).
 - **Decide() exige amostra ≥1.2× da meta**: ads com gasto baixo aparecem como "amostra insuficiente". Espere 24-72h pra acumular dados antes de decidir.

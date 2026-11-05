@@ -523,5 +523,13 @@ class SwitchingProjectsEndToEndTest(unittest.TestCase):
         self.assertIn("cliente-a", r.stdout)  # a troca falha nao mexeu no ativo
 
 
+class TestPsQuote(unittest.TestCase):
+    def test_aspas_simples_e_tipograficas_dobram(self):
+        self.assertEqual(tpa_paths.ps_quote("C:\\a b"), "'C:\\a b'")
+        self.assertEqual(tpa_paths.ps_quote("d'x"), "'d''x'")
+        for q in "\u2018\u2019\u201a\u201b":
+            self.assertEqual(tpa_paths.ps_quote("a" + q + "b"), "'a" + q + q + "b'")
+
+
 if __name__ == "__main__":
     unittest.main()

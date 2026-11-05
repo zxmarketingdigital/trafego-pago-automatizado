@@ -208,7 +208,7 @@ def main():
         return
     if platform.system() != "Darwin":
         print(f"⚠️  LaunchAgents é macOS-only. Você está em {platform.system()}.")
-        print(f"   Pule esta etapa e agende os 2 jobs do projeto '{_P.name}' por cron (Linux ou Windows via WSL2):")
+        print(f"   Pule esta etapa e agende os 2 jobs do projeto '{_P.name}' por cron (Linux ou WSL2):")
         print()
         for line in tpa_paths.cron_lines(_P):
             print(f"   {line}")

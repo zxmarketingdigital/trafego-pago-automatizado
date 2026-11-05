@@ -6,6 +6,7 @@ Pensado para rodar com `pythonw.exe -X utf8` (sem janela; sem -X utf8 os scripts
 gravam os JSON/HTML em cp1252). A saída vai para logs/fetch.log.
 """
 import datetime
+import re
 import runpy
 import sys
 from pathlib import Path
@@ -39,7 +40,9 @@ for script in ("fetch_metrics.py", "paid_traffic_dashboard.py"):
             rc = 1
             break
     except Exception as e:  # noqa: BLE001
-        print(f"❌ {script}: {e!r}", flush=True)
+        # erro de rede traz a URL no repr, e a URL da Graph API traz o token
+        msg = re.sub(r"(access_token|fb_exchange_token|client_secret)=[^&\s'\"]+", r"\1=***", repr(e))
+        print(f"❌ {script}: {msg}", flush=True)
         rc = 1
         break
 log.flush()

@@ -428,7 +428,8 @@ def win_task_names(p):
 
 
 def ps_quote(text):
-    return "'" + str(text).replace("'", "''") + "'"
+    # PowerShell aceita ' e as tipográficas U+2018/2019/201A/201B como aspas simples: todas dobram
+    return "'" + re.sub("['\u2018\u2019\u201a\u201b]", lambda m: m.group(0) * 2, str(text)) + "'"
 
 
 def run_powershell(script, timeout=60):

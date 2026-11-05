@@ -108,6 +108,13 @@ class TestLogDoFetch(unittest.TestCase):
         self.assertIn("coletando conta 3 access_token=***", log)
         self.assertNotIn(TOKEN, log)
 
+    def test_excecao_grava_traceback_mascarado(self):
+        rc, log = self._rodar("def coletar():\n    raise KeyError('u?access_token=%s')\ncoletar()\n" % TOKEN)
+        self.assertEqual(rc, 1)
+        self.assertIn("Traceback", log)
+        self.assertIn("coletar", log)
+        self.assertNotIn(TOKEN, log)
+
     def test_sucesso_roda_os_dois_scripts(self):
         rc, log = self._rodar("print('fetch ok')\n")
         self.assertEqual(rc, 0)

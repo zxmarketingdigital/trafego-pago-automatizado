@@ -10,6 +10,7 @@ import datetime
 import re
 import runpy
 import sys
+import traceback
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -26,8 +27,9 @@ def _mascarar(text):
 
 
 class _LogMascarado:
-    """Log que mascara token em tudo que passa por ele: print dos scripts, código do
-    SystemExit, repr de erro de rede e traceback. A URL da Graph API traz o token.
+    """Log que mascara token em tudo que passa por write()/print(): saída dos scripts,
+    código do SystemExit, repr de erro de rede e traceback. A URL da Graph API traz o
+    token. Escrita direta em sys.stdout.buffer ou no fileno não passa pela máscara.
 
     Grava por linha inteira porque print(a, b) chega em vários write(): mascarar cada
     pedaço deixaria passar o valor separado da chave."""
@@ -91,6 +93,7 @@ for script in ("fetch_metrics.py", "paid_traffic_dashboard.py"):
             break
     except Exception as e:  # noqa: BLE001
         print(f"❌ {script}: {e!r}", flush=True)
+        traceback.print_exc()
         rc = 1
         break
 sys.exit(rc)

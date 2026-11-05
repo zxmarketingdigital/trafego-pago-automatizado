@@ -108,6 +108,28 @@ class TestLogDoFetch(unittest.TestCase):
         self.assertIn("coletando conta 3 access_token=***", log)
         self.assertNotIn(TOKEN, log)
 
+    def test_flush_entre_chave_e_valor_nao_vaza(self):
+        _, log = self._rodar("print('access_token=', end='', flush=True)\nprint('%s fim')\n" % TOKEN)
+        self.assertNotIn(TOKEN, log)
+        self.assertIn("access_token=*** fim", log)
+
+    def test_flush_no_meio_do_valor_nao_vaza_o_resto(self):
+        _, log = self._rodar("print('access_token=EAAS', end='', flush=True)\nprint('EGREDO123 fim')\n")
+        self.assertNotIn("EGREDO123", log)
+        self.assertIn("access_token=*** fim", log)
+
+    def test_flush_no_meio_de_token_meta_sem_chave_nao_vaza(self):
+        cru = "EAA" + "b1" * 20
+        _, log = self._rodar("print('resposta %s', end='', flush=True)\nprint('%s')\n" % (cru[:10], cru[10:]))
+        self.assertNotIn(cru[:10], log)
+        self.assertNotIn(cru[10:], log)
+        self.assertIn("resposta EAA***", log)
+
+    def test_flush_nao_duplica_o_que_ja_foi_gravado(self):
+        _, log = self._rodar("print('conta 1', end='', flush=True)\nprint(' ok', flush=True)\nprint('conta 2')\n")
+        self.assertEqual(log.count("conta 1 ok\n"), 1)
+        self.assertEqual(log.count("conta 2\n"), 1)
+
     def test_excecao_grava_traceback_mascarado(self):
         rc, log = self._rodar("def coletar():\n    raise KeyError('u?access_token=%s')\ncoletar()\n" % TOKEN)
         self.assertEqual(rc, 1)

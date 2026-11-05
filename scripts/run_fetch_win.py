@@ -20,6 +20,7 @@ _SEGREDO = re.compile(
     r"""((?:access_token|fb_exchange_token|client_secret)(?:\\*['"])?[ \t]*(?:[=:]|%3[Dd])[ \t]*(?:\\*['"])?)[^&\s'",}\\]+"""
 )
 _TOKEN_META = re.compile(r"\bEAA[A-Za-z0-9]{20,}")
+_TOKEN_META_INCOMPLETO = re.compile(r"\bEAA[A-Za-z0-9]*\Z")
 
 
 def _mascarar(text):
@@ -31,32 +32,43 @@ class _LogMascarado:
     código do SystemExit, repr de erro de rede e traceback. A URL da Graph API traz o
     token. Escrita direta em sys.stdout.buffer ou no fileno não passa pela máscara.
 
-    Grava por linha inteira porque print(a, b) chega em vários write(): mascarar cada
-    pedaço deixaria passar o valor separado da chave."""
+    print(a, b) chega em vários write(), e chave e valor podem vir separados por um
+    flush. Por isso a máscara roda sempre sobre a linha inteira e só vai para o arquivo
+    o que ainda não foi gravado dela."""
 
     def __init__(self, f):
         self._f = f
-        self._pendente = ""
+        self._linha = ""
+        self._gravado = ""
 
     def write(self, text):
-        self._pendente += text
-        linhas, fim, resto = self._pendente.rpartition("\n")
+        self._linha += text
+        completas, fim, resto = self._linha.rpartition("\n")
         if fim:
-            self._pendente = resto
-            self._gravar(linhas + fim)
+            self._linha = completas + fim
+            self._emitir()
+            self._linha, self._gravado = resto, ""
         return len(text)
 
     def flush(self):
         """Grava também a linha ainda sem quebra: o Agendador mata a tarefa no tempo
-        limite e o atexit não roda, então o que passou por flush já fica no log."""
-        pendente, self._pendente = self._pendente, ""
-        self._gravar(pendente)
+        limite e o atexit não roda, então o que passou por flush já fica no log. Só o
+        início de um token Meta espera o resto, porque ainda não dá para mascará-lo."""
+        self._emitir(_TOKEN_META_INCOMPLETO)
 
-    def _gravar(self, text):
+    def fechar(self):
+        self._emitir()
+
+    def _emitir(self, reter=None):
+        texto = _mascarar(self._linha)
+        if reter:
+            texto = reter.sub("", texto)
+        novo = texto[len(self._gravado):] if texto.startswith(self._gravado) else texto
+        self._gravado = texto
         # Log não pode derrubar a coleta: com disco cheio a linha se perde, mas os
         # scripts seguem e o código de saída continua avisando o Agendador.
         try:
-            self._f.write(_mascarar(text))
+            self._f.write(novo)
             self._f.flush()
         except (OSError, ValueError):
             pass
@@ -70,7 +82,7 @@ log_dir = HERE.parent.parent / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
 log = _LogMascarado(open(log_dir / "fetch.log", "a", encoding="utf-8"))
 sys.stdout = sys.stderr = log
-atexit.register(log.flush)
+atexit.register(log.fechar)
 
 print(f"\n[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] fetch", flush=True)
 if not sys.flags.utf8_mode:

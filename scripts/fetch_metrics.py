@@ -55,9 +55,11 @@ ACTION_TYPES = {
         "offsite_conversion.fb_pixel_purchase",
         "omni_purchase",
     ],
+    # So conversas iniciadas: e o numero que o Gerenciador/Central de Anuncios
+    # mostra como "Conversas por mensagem iniciadas". messaging_first_reply e
+    # outra metrica sobre as mesmas conversas.
     "messages": [
         "onsite_conversion.messaging_conversation_started_7d",
-        "onsite_conversion.messaging_first_reply",
     ],
     "installs": [
         "mobile_app_install",
@@ -120,16 +122,22 @@ def graph_get(path, params, token, *, page_url=None):
 
 
 def get_action_count(actions, action_type_list):
+    """Contagem de um evento a partir dos action_types equivalentes.
+
+    Os tipos de cada lista sao visoes do MESMO evento (ex.: purchase e
+    omni_purchase; messaging_conversation_started_7d e messaging_first_reply
+    sobre as mesmas conversas). Somar conta em dobro: usa o maior valor.
+    """
     if not actions:
         return 0.0
-    total = 0.0
+    best = 0.0
     for a in actions:
         if a.get("action_type") in action_type_list:
             try:
-                total += float(a.get("value", 0) or 0)
+                best = max(best, float(a.get("value", 0) or 0))
             except (ValueError, TypeError):
                 pass
-    return total
+    return best
 
 
 def fetch_insights(account_id, days, token):
@@ -146,9 +154,8 @@ def fetch_insights(account_id, days, token):
         "level": "ad",
         "fields": fields,
         "time_range": json.dumps({"since": since.isoformat(), "until": until.isoformat()}),
-        "filtering": json.dumps([{"field": "ad.effective_status",
-                                  "operator": "IN",
-                                  "value": ["ACTIVE", "PAUSED"]}]),
+        # Sem filtro de effective_status: ads de campanha/conjunto pausado ou
+        # arquivado tambem gastaram na janela e precisam entrar no total.
         "limit": 500,
     }
     account = account_id if str(account_id).startswith("act_") else f"act_{account_id}"

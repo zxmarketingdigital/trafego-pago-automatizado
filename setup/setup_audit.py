@@ -168,21 +168,23 @@ def c_launchagents_loaded():
 
 
 def c_phase_completed():
+    """Informativo: este setup não exige nenhum setup anterior (nunca reprova)."""
     p = _P.shared_config
     if not p.exists():
-        return False, "config.json base não existe"
+        return True, "config.json ausente (informativo — o setup recria o mínimo)"
     try:
-        cfg = json.loads(p.read_text(encoding="utf-8"))
-        return cfg.get("phase_completed", 0) >= 5, f"phase_completed={cfg.get('phase_completed')}"
+        cfg = json.loads(tpa_paths.read_text_compat(p))
+        fase = cfg.get("phase_completed", 0) if isinstance(cfg, dict) else "?"
+        return True, f"config.json presente, phase_completed={fase} (informativo)"
     except Exception as e:
-        return False, f"Erro: {e}"
+        return True, f"config.json ilegível (informativo): {e}"
 
 
 def c_meta_env():
     p = _P.meta_env
     if not p.exists():
         return False, "meta.env não criado (E1)"
-    content = p.read_text(encoding="utf-8")
+    content = tpa_paths.read_text_compat(p)
     if "META_AD_ACCOUNT_ID=act_" in content and "act_XXXXXXXXX" not in content:
         return True, "META_AD_ACCOUNT_ID configurado"
     return False, "META_AD_ACCOUNT_ID ainda placeholder"
@@ -197,7 +199,7 @@ def main():
     tpa_paths.announce(_P)
     print()
 
-    check("Pré-requisito Setup 5",     c_phase_completed)
+    check("config.json (informativo)", c_phase_completed)
     check("Python 3.9+",                c_python_version)
     check("meta.env preenchido",        c_meta_env)
     check("Perfil de campanhas",        c_perfil)

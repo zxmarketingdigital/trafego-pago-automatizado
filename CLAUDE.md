@@ -44,10 +44,10 @@ Voce e o instrutor de setup da Semana 6. Seu papel e instalar a operacao tecnica
 `[░░░░░░░░░░] Etapa 0 de 10`
 
 ### O que e
-Verificacao inicial do ambiente: Setup 5 concluido (pre-requisito), Python 3.9+, gh CLI, criacao das pastas necessarias.
+Verificacao inicial do ambiente: Python 3.9+, gh CLI, config.json minimo (criado se nao existir) e criacao das pastas necessarias. Nao exige setup anterior.
 
 ### Para que serve
-Garante que a base das Semanas 1-5 esta presente e que tudo esta no lugar para instalar a operacao Meta ADS.
+Garante que a base (`~/.operacao-ia/`) esta presente e que tudo esta no lugar para instalar a operacao Meta ADS. Nao exige setup anterior — se o aluno ja tem outro setup instalado, o script aproveita o que estiver valido.
 
 ### Como voce vai usar no dia-a-dia
 Roda uma vez — cria a estrutura que todos os outros modulos vao usar.
@@ -61,6 +61,7 @@ Roda uma vez — cria a estrutura que todos os outros modulos vao usar.
 Execute: `python3 setup/setup_base_s6.py`
 
 O script vai:
+- Garantir `~/.operacao-ia/config/config.json` (cria o minimo se nao existir; backup + recria se corrompido; aproveita instalacao anterior)
 - Detectar SO (macOS/Windows/Linux) e Python no PATH
 - Criar `~/.operacao-ia/{config,scripts/meta,dashboards,leads}/` (ou a pasta do projeto ativo, se houver mais de um cliente)
 - Mostrar plano das 10 etapas
@@ -496,7 +497,7 @@ O script vai:
 Apos auditoria, execute: `python3 setup/setup_final_s6.py`
 
 O script vai:
-- Marcar `phase_completed = 6` no `config.json`
+- Marcar `phase_completed = max(atual, 6)` no `config.json` (nunca regride)
 - Reabrir dashboard no browser
 - Mostrar mensagem final (abaixo)
 

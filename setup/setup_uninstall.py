@@ -5,7 +5,7 @@ Setup 6 — Uninstall
 Remove configs, LaunchAgents (no Windows, as tarefas do Agendador), dashboards
 e (opcional) skills do Setup 6
 DO PROJETO VIGENTE (padrão: ~/.operacao-ia; ou o projeto ativo / TPA_PROJECT).
-Nunca toca nos outros projetos. Reverte phase_completed 6→5 em config.json
+Nunca toca nos outros projetos. Reverte phase_completed 6→(fase anterior à instalação) em config.json
 só quando nenhum outro projeto continua configurado.
 
 Uso:
@@ -21,6 +21,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import tpa_paths  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from setup_base_s6 import write_config_atomic  # noqa: E402
 
 _P = tpa_paths.active_paths()
 OPERACAO = _P.home
@@ -230,7 +233,15 @@ def revert_phase():
         print("  - config.json: não existe")
         return
     try:
-        data = json.loads(CONFIG.read_text(encoding="utf-8"))
+        texto = tpa_paths.read_text_compat(CONFIG)
+    except OSError as e:
+        print(f"  ⚠️  não consegui ler config.json: {e}")
+        PENDENCIAS.append(f"conferir {CONFIG}: arquivo em uso, phase_completed não foi revertido (feche o programa que o usa e rode de novo)")
+        return
+    try:
+        data = json.loads(texto)
+        if not isinstance(data, dict):
+            raise ValueError("config.json não é um objeto JSON")
     except Exception as e:
         print(f"  ⚠️  config.json inválido: {e}")
         PENDENCIAS.append(f"conferir {CONFIG}: JSON inválido, phase_completed não foi revertido")
@@ -239,9 +250,22 @@ def revert_phase():
         print("  - phase_completed mantido: outro projeto ainda está configurado")
         return
     if data.get("phase_completed") == 6:
-        data["phase_completed"] = 5
-        CONFIG.write_text(json.dumps(data, indent=2), encoding="utf-8")
-        print("  ✓ phase_completed: 6 → 5")
+        # volta para a fase de antes deste setup (gravada na instalação). Sem registro
+        # (instalação feita antes deste fix), assume 5: nunca derruba abaixo do que um
+        # setup antigo de turma possa conferir.
+        setup6 = data.get("setup6")
+        before = setup6.get("phase_before", 5) if isinstance(setup6, dict) else 5
+        if isinstance(before, bool) or not isinstance(before, (int, float, str)):
+            before = 5  # so restaura valor de fase valido (inclui o texto original, ex.: "week5")
+        data["phase_completed"] = before
+        data.pop("setup6", None)
+        try:
+            write_config_atomic(data, CONFIG)
+        except OSError as e:
+            print(f"  ⚠️  não consegui gravar config.json: {e}")
+            PENDENCIAS.append(f"conferir {CONFIG}: phase_completed não foi revertido ({e})")
+            return
+        print(f"  ✓ phase_completed: 6 → {before}")
     else:
         print(f"  - phase_completed já é {data.get('phase_completed')}")
 

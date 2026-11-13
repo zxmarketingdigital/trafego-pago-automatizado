@@ -11,6 +11,8 @@ Conecte seu gerenciador de anúncios do Meta ao Claude Code e automatize a opera
 
 ## Instalação
 
+> **Onde rodar:** cole os 3 comandos abaixo no **terminal do seu computador** (Terminal no Mac, PowerShell no Windows). Não cole no Claude do navegador nem no chat do app do Claude: ali o Claude não tem acesso ao seu computador e responde que "não consegue clonar nem instalar". O último comando (`claude`) abre o Claude Code, e a partir dele o setup roda sozinho.
+
 ```bash
 git clone https://github.com/zxmarketingdigital/trafego-pago-automatizado
 cd trafego-pago-automatizado

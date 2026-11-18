@@ -93,6 +93,14 @@ Conecta uma vez. Token persiste em `~/.Codex.json`. Renova automaticamente.
 ### Instalacao
 Execute: `python3 setup/setup_meta_oauth.py` (imprime fluxo de 2 vias)
 
+**Passo 0 — registrar o servidor MCP da Meta (uma vez só):**
+Antes da Via A, confira se o servidor já está registrado. Se `mcp__meta-official__authenticate` não existir na sessão, registre e reinicie:
+
+- Claude Code: `claude mcp add --transport http --scope user meta-official https://mcp.facebook.com/ads` → saia (`/exit`) e abra o `claude` de novo nesta pasta.
+- Codex: `codex mcp add meta-official --url https://mcp.facebook.com/ads` → `codex mcp login meta-official` → abra o `codex` de novo nesta pasta.
+
+Confirme com `claude mcp list` (ou `codex mcp list`): `meta-official` tem que aparecer. Sem esse passo a Via A falha com "tool não encontrada".
+
 **Via A — MCP oficial (preferida):**
 - Disparar `mcp__meta-official__authenticate`
 - Receber URL OAuth, aluno autoriza no browser

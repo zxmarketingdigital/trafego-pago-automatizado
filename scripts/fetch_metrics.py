@@ -41,7 +41,8 @@ GRAPH_BASE = "https://graph.facebook.com/v21.0"
 BRT = timezone(timedelta(hours=-3))
 
 # Mapeamento KPI → lista de action_types aceitos (variantes Meta).
-# Soma todos os tipos da lista (ex: lead = sum(lead, onsite_lead, leadgen.other)).
+# Os tipos de cada lista sao visoes do mesmo evento: get_action_count usa o MAIOR
+# valor entre eles (somar contava em dobro).
 ACTION_TYPES = {
     "leads": [
         "lead",
@@ -55,9 +56,11 @@ ACTION_TYPES = {
         "offsite_conversion.fb_pixel_purchase",
         "omni_purchase",
     ],
+    # So conversas iniciadas: e o numero que o Gerenciador/Central de Anuncios
+    # mostra como "Conversas por mensagem iniciadas". messaging_first_reply e
+    # outra metrica sobre as mesmas conversas.
     "messages": [
         "onsite_conversion.messaging_conversation_started_7d",
-        "onsite_conversion.messaging_first_reply",
     ],
     "installs": [
         "mobile_app_install",
@@ -66,6 +69,15 @@ ACTION_TYPES = {
 }
 
 PURCHASE_VALUE_TYPES = ACTION_TYPES["purchases"]
+
+# Partes DISJUNTAS de um evento: "lead" e o total (formulario instantaneo +
+# pixel). Se o "lead" agregado nao vier, a soma das partes ainda conta tudo.
+DISJOINT_PARTS = {
+    "leads": [
+        "onsite_conversion.lead_grouped",
+        "offsite_conversion.fb_pixel_lead",
+    ],
+}
 
 
 def log(msg):
@@ -119,17 +131,34 @@ def graph_get(path, params, token, *, page_url=None):
         raise RuntimeError(f"Graph API {e.code}: {body[:300]}")
 
 
-def get_action_count(actions, action_type_list):
+def get_action_count(actions, action_type_list, disjoint_parts=None):
+    """Contagem de um evento a partir dos action_types equivalentes.
+
+    Os tipos de cada lista sao visoes do MESMO evento (ex.: purchase e
+    omni_purchase; messaging_conversation_started_7d e messaging_first_reply
+    sobre as mesmas conversas). Somar conta em dobro: usa o maior valor.
+    Com disjoint_parts, a soma dessas partes tambem concorre ao maximo, para
+    nao perder leads quando o agregado "lead" nao vem no retorno.
+    """
     if not actions:
         return 0.0
-    total = 0.0
+    best = 0.0
     for a in actions:
         if a.get("action_type") in action_type_list:
             try:
-                total += float(a.get("value", 0) or 0)
+                best = max(best, float(a.get("value", 0) or 0))
             except (ValueError, TypeError):
                 pass
-    return total
+    if disjoint_parts:
+        parts = 0.0
+        for a in actions:
+            if a.get("action_type") in disjoint_parts:
+                try:
+                    parts += float(a.get("value", 0) or 0)
+                except (ValueError, TypeError):
+                    pass
+        best = max(best, parts)
+    return best
 
 
 def fetch_insights(account_id, days, token):
@@ -146,9 +175,8 @@ def fetch_insights(account_id, days, token):
         "level": "ad",
         "fields": fields,
         "time_range": json.dumps({"since": since.isoformat(), "until": until.isoformat()}),
-        "filtering": json.dumps([{"field": "ad.effective_status",
-                                  "operator": "IN",
-                                  "value": ["ACTIVE", "PAUSED"]}]),
+        # Sem filtro de effective_status: todo ad que gastou na janela entra
+        # (pausado, arquivado, excluido, reprovado), igual ao total do Gerenciador.
         "limit": 500,
     }
     account = account_id if str(account_id).startswith("act_") else f"act_{account_id}"
@@ -184,7 +212,7 @@ def row_raws(row):
         "impressions": int(row.get("impressions") or 0),
         "clicks": int(row.get("clicks") or 0),
         "reach": int(row.get("reach") or 0),
-        "leads": get_action_count(row.get("actions"), ACTION_TYPES["leads"]),
+        "leads": get_action_count(row.get("actions"), ACTION_TYPES["leads"], DISJOINT_PARTS["leads"]),
         "purchases": get_action_count(row.get("actions"), ACTION_TYPES["purchases"]),
         "purchase_value": get_action_count(row.get("action_values"), PURCHASE_VALUE_TYPES),
         "messages": get_action_count(row.get("actions"), ACTION_TYPES["messages"]),

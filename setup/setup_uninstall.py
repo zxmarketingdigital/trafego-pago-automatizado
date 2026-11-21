@@ -52,6 +52,8 @@ SKILLS = [
     "meta-metrics-fetcher",
     "meta-performance-analyzer",
     "meta-budget-optimizer",
+    "meta-acoes-campanha",
+    "meta-publicar-criativo",
 ]
 
 

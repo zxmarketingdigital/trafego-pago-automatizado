@@ -43,6 +43,8 @@ Escolha uma opção:
   9. Configurar CAPI (rastreamento server-side)
  10. Receber o relatório diário por e-mail
  11. Receber o relatório diário no WhatsApp
+ 12. Pausar, ativar ou ajustar orçamento (com confirmação)
+ 13. Publicar o criativo aprovado (nasce pausado)
 ```
 
 ## Roteamento
@@ -58,6 +60,8 @@ Escolha uma opção:
 | 9 | Invocar skill `meta-capi-setup` |
 | 10 | Invocar skill `meta-relatorio-email` |
 | 11 | Invocar skill `meta-relatorio-whatsapp` |
+| 12 | Invocar skill `meta-acoes-campanha` |
+| 13 | Invocar skill `meta-publicar-criativo` |
 | 7 | Rodar `python3 ~/zx-control-trafego-pago/setup/setup_perfil_campanhas.py` para regravar `meta_perfil.json` |
 | 8 | Ler `paid-traffic-7d.json`, formatar `kpis_summary` em tabela com status verde/amarelo/vermelho |
 

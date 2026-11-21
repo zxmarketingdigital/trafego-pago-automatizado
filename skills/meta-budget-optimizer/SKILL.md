@@ -76,6 +76,7 @@ mcp__meta-official__ads_update_entity(
 ## Regras
 
 - Nunca aplique automaticamente — só gere os comandos prontos
+- Para aplicar, use a skill `meta-acoes-campanha` (`python3 meta_acoes.py orcamento <id> <valor>`): ela mostra o plano antes→depois, só aplica com `--confirmar` e registra a mudança para desfazer
 - Sempre confirme com o aluno antes de invocar `ads_update_entity`
 - Se campanha tem CBO (Campaign Budget Optimization), edite o budget do campaign; se ABO, edite ad set
 - Mostre sempre o delta percentual + razão por trás

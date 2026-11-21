@@ -198,8 +198,8 @@ Voce digita o trigger no chat (ex: "criar campanha de lead") e a skill correta e
 Execute: `python3 setup/setup_skills.py`
 
 O script vai:
-- Copiar 9 pastas de `skills/` para `~/.claude/skills/`
-- Validar com `ls ~/.claude/skills/ | grep -E "meta-|agente-trafego"` (deve retornar 9)
+- Copiar 11 pastas de `skills/` (9 do setup + 2 bônus de ação) para `~/.claude/skills/`
+- Validar com `ls ~/.claude/skills/ | grep -E "meta-|agente-trafego"` (deve retornar 11)
 
 Apos o script:
 
@@ -214,6 +214,8 @@ Apos o script:
 /meta-capi-setup            configurar CAPI (bônus)
 /meta-relatorio-email       relatório diário por e-mail (bônus)
 /meta-relatorio-whatsapp    relatório diário no WhatsApp (bônus)
+/meta-acoes-campanha        pausar/ativar/orçamento com confirmação (bônus)
+/meta-publicar-criativo     publicar criativo aprovado, nasce pausado (bônus)
 
 Pronto para a Etapa 4?"
 
@@ -533,6 +535,8 @@ Bonus (instalacao opcional, cada um no seu proprio tempo):
 /meta-capi-setup            rastreamento server-side (CAPI) ponta a ponta
 /meta-relatorio-email       resumo diario da operacao no seu e-mail
 /meta-relatorio-whatsapp    o mesmo resumo, no WhatsApp
+/meta-acoes-campanha        pausar, ativar e ajustar orcamento com confirmacao (rode antes: python3 setup/setup_acoes_meta.py)
+/meta-publicar-criativo     publicar o criativo aprovado na Meta, nasce pausado (mesmo setup)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Voce acabou de plugar trafego pago direto no Claude Code.
@@ -559,6 +563,7 @@ Nos vemos no proximo setup!
 - **Skills:** `~/.claude/skills/{agente-trafego-pago,meta-*}/`
 - **MCP usado:** `mcp__meta-official__*` (oficial Meta — `mcp.facebook.com/ads`)
 - **Token Meta:** `META_ACCESS_TOKEN` em `meta.env` (chmod 600). Fonte de verdade pro fetcher autônomo. Renovação: `setup_meta_oauth.py --renew`.
+- **Acoes na Meta (bonus):** `python3 setup/setup_acoes_meta.py` instala `meta_acoes.py` e `meta_publicar.py` em `<projeto>/scripts/meta/`; registro de mudancas em `<projeto>/logs/meta-acoes.jsonl`. Sem `--confirmar` nada e alterado.
 - **Uninstall:** `python3 setup/setup_uninstall.py` — opção [A] mantém skills, [B] remove tudo.
 - **Glossário:** `docs/glossario.md` — CPL/CPA/ROAS/Pixel/CBO/ABO/Lookalike traduzidos.
 - **Progress flags:** `~/.operacao-ia/config/setup6_progress.json` (e6_test_completed, e7_test_completed, e8_test_completed, demo_campaign_ids, fetch_skipped_reason).

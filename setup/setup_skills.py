@@ -37,6 +37,9 @@ EXPECTED = [
     "meta-capi-setup",
     "meta-relatorio-email",
     "meta-relatorio-whatsapp",
+    # Bônus de ação (opt-in: setup/setup_acoes_meta.py instala os scripts).
+    "meta-acoes-campanha",
+    "meta-publicar-criativo",
 ]
 
 

@@ -43,7 +43,7 @@ A partir daí o setup é guiado — 10 etapas, cada uma com explicação + execu
 zx-control-trafego-pago/
 ├─ CLAUDE.md            # roteiro de instalação (lido pelo Claude Code)
 ├─ setup/               # 9 scripts Python das etapas
-├─ skills/              # 6 SKILL.md
+├─ skills/              # 11 SKILL.md (9 do setup + 2 bônus de ação na Meta)
 ├─ scripts/             # fetch_metrics, dashboard generator, server starter
 ├─ docs/                # template HTML do dashboard
 └─ launchagents/        # 2 plists macOS
@@ -59,6 +59,43 @@ zx-control-trafego-pago/
 /meta-performance-analyzer  análise da semana
 /meta-budget-optimizer      plano de realocação
 ```
+
+Bônus de ação na Meta (instalação opcional, veja a seção abaixo):
+
+```
+/meta-acoes-campanha        pausar, ativar e ajustar orçamento com confirmação
+/meta-publicar-criativo     publicar o criativo aprovado (nasce pausado)
+```
+
+## Ações na Meta com confirmação (bônus)
+
+Até aqui o sistema recomendava; agora ele também aplica, sem nunca agir de surpresa. Funciona igual no Claude Code e no Codex, em Mac, Windows e Linux. Instale uma vez:
+
+```
+python3 setup/setup_acoes_meta.py        # no Windows: python setup/setup_acoes_meta.py
+```
+
+O setup só copia `meta_acoes.py`, `meta_publicar.py` e `fetch_metrics.py` para a pasta do projeto vigente e confere a conexão; ele não altera nada na sua conta Meta. Depois, em `<projeto>/scripts/meta`:
+
+```
+python3 meta_acoes.py listar                       # IDs, status e orçamento diário
+python3 meta_acoes.py pausar <id>                  # mostra o plano; nada muda
+python3 meta_acoes.py pausar <id> --confirmar      # aplica e confere na Meta
+python3 meta_acoes.py orcamento <id> 80 --confirmar
+python3 meta_acoes.py historico                    # o que foi mudado, quando
+python3 meta_acoes.py desfazer --ultima --confirmar
+
+python3 meta_publicar.py --exemplo > campanha.json # modelo do criativo aprovado
+python3 meta_publicar.py campanha.json             # resumo (conta, orçamento, público, criativo)
+python3 meta_publicar.py campanha.json --confirmar # cria campanha, conjunto e anúncio PAUSADOS
+```
+
+- **Sem `--confirmar` nada é alterado**: o comando só mostra o plano (antes → depois).
+- **Cada mudança aplicada vai para `<projeto>/logs/meta-acoes.jsonl`**, com id para `desfazer`.
+- **Respeita o projeto (cliente) ativo** e recusa IDs de outra conta de anúncios.
+- **O que é publicado nasce PAUSADO.** Ativar é outro comando com confirmação (`meta_acoes.py ativar ... --confirmar`).
+- `meta_publicar.py` cobre objetivos tráfego, leads e vendas (site, com pixel), imagem ou vídeo. Formulário instantâneo, mensagens/WhatsApp, carrossel e catálogo ficam com a skill `meta-campaign-launcher`. Os payloads foram testados com a rede simulada; se a sua conta pedir campos novos da Graph API, acrescente-os em `campanha_extra`, `conjunto_extra`, `targeting_extra` ou `criativo_extra` no `campanha.json` (aparecem no resumo; não podem trocar status, orçamento, público, objetivo ou página). Interesse que não bate exatamente com o nome pedido é marcado APROXIMADO e só é criado com `--aceitar-aproximado`. Se uma chamada terminar sem resposta, o item pode ter sido criado ou alterado: o comando lê de volta quando consegue e, quando não, registra como incerto e manda conferir no Gerenciador.
+- A variável `ZX_TPA_VIDEO_TIMEOUT` (padrão 600 s) controla quanto esperar a Meta processar o vídeo.
 
 ## Limitações conhecidas
 

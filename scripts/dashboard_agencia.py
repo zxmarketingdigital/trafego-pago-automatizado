@@ -356,7 +356,7 @@ def render_text(rows, totals, window):
     lines.append(head)
     for r in rows:
         if r["erro"]:
-            extra = " | API Meta: %s" % r["api_status"] if r["api_status"] in ("atencao", "critico", "erro", "nao_verificado") else ""
+            extra = " | API Meta: %s" % r["api_status"] if r["api_status"] in ("atencao", "critico", "erro") else ""
             lines.append("%-16s %s%s" % (r["projeto"], r["erro"], extra))
             continue
         notes = []
@@ -364,7 +364,7 @@ def render_text(rows, totals, window):
             notes.append("dado defasado (+26h)")
         if r["atualizacao_falhou"]:
             notes.append("atualização falhou (dado de %s)" % (r["gerado_em"] or "data desconhecida"))
-        if r["api_status"] in ("atencao", "critico", "erro", "nao_verificado"):
+        if r["api_status"] in ("atencao", "critico", "erro"):
             notes.append("API Meta: %s" % r["api_status"])
         lines.append("%-16s %-14s %-24s %-14s %-12s %-8s %s" % (
             r["projeto"], _money(r["gasto"], r["moeda"]), _result_cell(r),
@@ -512,6 +512,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.janela < 1:
         parser.error("--janela precisa ser maior que zero")
+    # O navegador manda só o nome (sem esquema, porta ou caminho): normaliza o que o aluno digitar.
+    args.host_permitido = [re.sub(r"^[a-z]+://", "", h.strip().lower()).split("/")[0].split(":")[0]
+                           for h in args.host_permitido if h.strip()]
     if args.host_permitido and not args.protegido_por_acesso:
         print(PROTECTION_REFUSAL % ", ".join(args.host_permitido), file=sys.stderr)
         return 2

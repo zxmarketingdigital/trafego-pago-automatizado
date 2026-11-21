@@ -171,7 +171,8 @@ def _api_note(base: Path) -> str:
             return ""
         messages = status.get("mensagens")
         messages = messages if isinstance(messages, list) else []
-        first = str(messages[0]) if messages else "a Meta avisou sobre a versão da API"
+        first = str(messages[0]) if messages else (
+            "sem detalhe" if status.get("status") == "erro" else "a Meta avisou sobre a versão da API")
         if len(first) > 80:
             first = first[:79].rstrip() + "…"
         label = "API META URGENTE" if status.get("status") == "critico" else "API META"

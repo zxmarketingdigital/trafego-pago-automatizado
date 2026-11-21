@@ -435,6 +435,11 @@ class ReportIntegrationTest(unittest.TestCase):
             self.assertIn("ilegível", warning)  # arquivo existente e quebrado não some em silêncio
             self.assertIn("check_api_version.py", warning)
 
+    def test_error_status_is_reported_too(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._report_dir(tmp, {"status": "erro", "mensagens": ["A Meta recusou o token"]})
+            self.assertIn("não conseguiu confirmar", assemble_report(7, operation_dir=base, now=NOW)["warning"])
+
     def test_unavailable_report_still_carries_the_api_warning(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = self._report_dir(tmp, {"status": "critico", "mensagens": ["versão encerrada"]})

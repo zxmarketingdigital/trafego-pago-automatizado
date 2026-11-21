@@ -173,10 +173,13 @@ def _fill_identity(row, p):
 
 
 def _fill_row(row, p, window, now):
-    api = _read_json(p.dashboards / API_STATUS_FILE)
+    api_path = p.dashboards / API_STATUS_FILE
+    api = _read_json(api_path)
     if api:
         status = api.get("status")
         row["api_status"] = status if isinstance(status, str) else None
+    elif api_path.exists():
+        row["api_status"] = "erro"  # existe mas está ilegível: não pode parecer "checagem nunca rodou"
 
     source = p.dashboards / ("paid-traffic-%dd.json" % window)
     data = _read_json(source)
@@ -225,7 +228,7 @@ def _fill_row(row, p, window, now):
         compras=purchases,
         cpa=(spend / purchases) if purchases is not None and purchases > 0 else None,
         roas=(value / spend) if value is not None and spend > 0 and value > 0 else None,
-        gerado_em=data.get("generated_at"),
+        gerado_em=str(data.get("generated_at") or "")[:40] or None,
         raws={k: _num(v) for k, v in raws.items()},
         # Métrica ausente não é zero: só entra no CPA/ROAS do total quem de fato mede compras/valor.
         tem_compras=purchases is not None,
@@ -353,7 +356,8 @@ def render_text(rows, totals, window):
     lines.append(head)
     for r in rows:
         if r["erro"]:
-            lines.append("%-16s %s" % (r["projeto"], r["erro"]))
+            extra = " | API Meta: %s" % r["api_status"] if r["api_status"] in ("atencao", "critico", "erro", "nao_verificado") else ""
+            lines.append("%-16s %s%s" % (r["projeto"], r["erro"], extra))
             continue
         notes = []
         if r["defasado"]:
@@ -416,7 +420,9 @@ def render_html(rows, totals, window, now=None):
         if r["porta"]:
             link = '<a href="http://localhost:%d/paid-traffic-dashboard-%dd.html">%s</a>' % (r["porta"], window, esc(r["projeto"]))
         if r["erro"]:
-            out.append("<tr><td>%s</td><td>%s</td><td colspan=\"7\" class=\"err\">%s</td></tr>" % (link, esc(r["conta"] or "—"), esc(r["erro"])))
+            out.append("<tr><td>%s</td><td>%s</td><td colspan=\"7\" class=\"err\">%s</td></tr>" % (
+                link, esc(r["conta"] or "—"),
+                esc(r["erro"] + ((" | API Meta: " + r["api_status"]) if r["api_status"] in API_ICON and r["api_status"] != "ok" else ""))))
             continue
         cur = r["moeda"]
         gen = esc(r["gerado_em"] or "—")

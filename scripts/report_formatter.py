@@ -167,19 +167,21 @@ def _api_note(base: Path) -> str:
         # Existe mas não dá para ler (escrita interrompida): o aviso anterior pode ter sumido junto.
         return "API META: o arquivo da checagem está ilegível, rode python3 scripts/check_api_version.py."
     try:
-        if status.get("status") not in ("atencao", "critico"):
+        if status.get("status") not in ("atencao", "critico", "erro"):
             return ""
         messages = status.get("mensagens")
         messages = messages if isinstance(messages, list) else []
         first = str(messages[0]) if messages else "a Meta avisou sobre a versão da API"
-        if len(first) > 150:
-            first = first[:149].rstrip() + "…"
+        if len(first) > 80:
+            first = first[:79].rstrip() + "…"
         label = "API META URGENTE" if status.get("status") == "critico" else "API META"
+        if status.get("status") == "erro":
+            first = "a checagem não conseguiu confirmar a versão (" + first.rstrip(".") + ")."
         # A data da checagem vai no texto: se o agendamento parar, o aviso não parece mais novo do que é.
         checked = str(status.get("checked_at") or "")[:10]
         when = " (checagem de %s)" % checked if checked else ""
-        # A ação vem antes do detalhe: o WhatsApp corta o aviso em ~210 caracteres e, com
-        # "dado defasado" junto, é o detalhe (não a ação) que deve ser cortado.
+        # O aviso da API vai na frente do warning e a ação antes do detalhe: o WhatsApp corta em ~210
+        # caracteres, então o que pode ser cortado é o fim de outro aviso, nunca a ação.
         return label + when + ": rode python3 scripts/check_api_version.py. " + first
     except Exception:  # noqa: BLE001
         return ""
@@ -189,7 +191,7 @@ def _with_api_note(report: Dict[str, Any], base: Path) -> Dict[str, Any]:
     """Relatório sem dados também leva o aviso da API: é justo quando a coleta quebra que ele importa."""
     note = _api_note(base)
     if note:
-        report["warning"] = (str(report.get("warning") or "") + " " + note).strip()
+        report["warning"] = (note + " " + str(report.get("warning") or "")).strip()
     return report
 
 
@@ -289,7 +291,7 @@ def assemble_report(
 
     api_note = _api_note(base)
     if api_note:
-        warning = (warning + " " + api_note).strip()
+        warning = (api_note + " " + warning).strip()
 
     kpi_meta = {
         item.get("key"): item

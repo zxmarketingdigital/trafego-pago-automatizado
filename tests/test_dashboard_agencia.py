@@ -86,6 +86,18 @@ class CollectTest(unittest.TestCase):
             self.assertIn("API Meta: erro", da.render_text([row], totals, 7))
             self.assertIn("erro", da.render_html([row], totals, 7).split("API Meta</th>", 1)[1])
 
+    def test_unreadable_api_file_and_error_rows_still_show_the_api_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = _make(Path(tmp), "default", "cpl", "BRL", 10, {"leads": 1})
+            (p.dashboards / "api-status.json").write_text("{quebrado", encoding="utf-8")
+            row = da.collect_client("default", p, 7, now=NOW)
+            self.assertEqual(row["api_status"], "erro")  # existe e não lê: diferente de "nunca rodou"
+            q = _make(Path(tmp) / "b", "default", "cpl", "BRL", 10, {"leads": 1}, api="critico")
+            (q.dashboards / "paid-traffic-7d.json").unlink()
+            bad = da.collect_client("default", q, 7, now=NOW)
+            self.assertIn("API Meta: critico", da.render_text([bad], {}, 7))
+            self.assertIn("API Meta: critico", da.render_html([bad], {}, 7))
+
 
 class RobustnessTest(unittest.TestCase):
     def _raw(self, tmp, payload):

@@ -32,6 +32,6 @@ Transforma o criativo aprovado (arte ou vídeo + copy) em campanha, conjunto e a
 - Vídeo é processado pela Meta: o script espera até `ZX_TPA_VIDEO_TIMEOUT` segundos (padrão 600) e imprime quanto levou.
 - Contas ou versões da API que exigem campos novos: use `campanha_extra`, `conjunto_extra`, `targeting_extra` ou `criativo_extra` no `campanha.json` para acrescentar os campos pedidos no erro da Meta. Eles aparecem no resumo. Não podem trocar status, orçamento, público, objetivo, página ou ligação entre itens (o comando recusa): esses campos têm lugar próprio no arquivo.
 - Se um interesse não bate exatamente com o nome pedido, o resumo marca APROXIMADO e o comando não cria. Use o nome exato mostrado ou rode com `--aceitar-aproximado`.
-- Se uma etapa terminar sem resposta (timeout), ela PODE ter sido criada: procure pelo nome no Gerenciador antes de rodar de novo, para não duplicar.
+- Se uma etapa terminar sem resposta (timeout), ela PODE ter sido criada: procure pelo nome com `python3 meta_acoes.py listar` (ou lendo pelo MCP da Meta) antes de rodar de novo, para não duplicar.
 - Fora do escopo: formulário instantâneo (lead form), campanha de mensagens/WhatsApp, carrossel e catálogo. Para esses, use `meta-campaign-launcher`.
 - Nunca mostre o token da Meta (fica em `meta.env`, fora do git).

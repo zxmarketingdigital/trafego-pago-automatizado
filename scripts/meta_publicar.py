@@ -299,8 +299,8 @@ def _post(ctx, caminho, params, **kw):
         if alvo in ("adimages", "advideos"):
             dica = "o arquivo PODE ter sido enviado: confira a biblioteca de mídia da conta antes de reenviar"
         else:
-            dica = ("esta etapa (%s) PODE ter sido criada na Meta: procure pelo nome \"%s\" no Gerenciador "
-                    "(pausada, não gasta) antes de rodar de novo, para não duplicar" % (alvo, params.get("name", "")))
+            dica = ("esta etapa (%s) PODE ter sido criada na Meta: procure pelo nome \"%s\" com `python3 meta_acoes.py listar` "
+                    "ou pelo Claude Code/Codex (MCP da Meta) (pausada, não gasta) antes de rodar de novo, para não duplicar" % (alvo, params.get("name", "")))
         raise meta_acoes.AcaoIncerta("%s. %s." % (meta_acoes.redige(msg_erro(exc), ctx.token), dica))
     except RuntimeError as exc:
         raise AcaoErro(meta_acoes.redige(msg_erro(exc), ctx.token))
@@ -425,8 +425,8 @@ def publica(ctx, plano, interesses, out=print, sleep=time.sleep):
         return ids, exc
     except KeyboardInterrupt:
         return ids, meta_acoes.AcaoIncerta(
-            "Interrompido (Ctrl+C). A etapa em andamento PODE ter sido criada: procure pelo nome \"%s\" no Gerenciador "
-            "antes de rodar de novo." % plano["nome"]
+            "Interrompido (Ctrl+C). A etapa em andamento PODE ter sido criada: procure pelo nome \"%s\" com `python3 meta_acoes.py listar` "
+            "ou pelo Claude Code/Codex (MCP da Meta) antes de rodar de novo." % plano["nome"]
         )
 
 
@@ -462,7 +462,7 @@ def executa(ctx, plano, interesses, confirmar, out=print, sleep=time.sleep, acei
         criados = {k: v for k, v in ids.items() if k != "image_hash"}
         if criados:
             out("   Já criado na Meta (tudo PAUSADO, nada gasta): %s" % ", ".join("%s=%s" % kv for kv in criados.items()))
-            out("   Nada foi apagado. Pause/apague pelo Gerenciador, ou ajuste e rode de novo (vai criar uma campanha NOVA).")
+            out("   Nada foi apagado. Os IDs acima foram enviados com status PAUSADO, mas não conferi depois da falha: confira com `python3 meta_acoes.py listar` (lê ao vivo na conta deste mesmo projeto) ou pelo Claude Code/Codex (MCP da Meta). Se algo estiver ativo: `python3 meta_acoes.py pausar <id> --confirmar`. Ajustar e rodar de novo cria uma campanha NOVA.")
         return 1
     out("✅ Criado: campanha %s · conjunto %s · anúncio %s" % (ids["campaign_id"], ids["adset_id"], ids["ad_id"]))
     out("▶️  6/6 conferindo que tudo nasceu pausado…")
@@ -470,7 +470,7 @@ def executa(ctx, plano, interesses, confirmar, out=print, sleep=time.sleep, acei
         fora = confere_pausado(ctx, ids)
     except KeyboardInterrupt:
         meta_acoes.registrar_seguro(ctx, dict(base, resultado="incerto", verificado=False, erro="interrompido na conferência"), out)
-        out("\n⚠️  Interrompido na conferência. Os IDs acima foram criados: confira no Gerenciador que estão PAUSADOS.")
+        out("\n⚠️  Interrompido na conferência. Os IDs acima foram criados: confira com `python3 meta_acoes.py listar` que estão PAUSADOS.")
         return 1
     _, gravou = meta_acoes.registrar_seguro(ctx, dict(base, resultado="ok", verificado=not fora), out)
     if not fora:
@@ -478,9 +478,9 @@ def executa(ctx, plano, interesses, confirmar, out=print, sleep=time.sleep, acei
     if not gravou:
         return 1
     if fora:
-        out("⚠️  Não consegui confirmar o status PAUSADO de: %s. Confira no Gerenciador antes de qualquer ativação." % ", ".join(fora))
+        out("⚠️  Não consegui confirmar o status PAUSADO de: %s. Confira com `python3 meta_acoes.py listar --nivel anuncio` (lê ao vivo na conta deste mesmo projeto) antes de qualquer ativação." % ", ".join(fora))
         return 1
-    out("   Revise no Gerenciador de Anúncios. Para ativar (pede confirmação, mostra o orçamento):")
+    out("   Revise com `python3 meta_acoes.py listar` ou pelo Claude Code/Codex (MCP da Meta). Para ativar (pede confirmação, mostra o orçamento):")
     out("   python3 meta_acoes.py ativar %s %s %s --confirmar" % (ids["campaign_id"], ids["adset_id"], ids["ad_id"]))
     out("\nRegistro: %s" % ctx.log_path)
     return 0

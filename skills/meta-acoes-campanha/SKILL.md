@@ -36,7 +36,7 @@ python3 meta_acoes.py desfazer <id-da-mudança> | --ultima [--confirmar]
 - O ID é o número que o `listar` mostra; o tipo (campanha, conjunto ou anúncio) é detectado sozinho.
 - `orcamento` mexe no orçamento **diário** de quem o tem: conjunto (ABO) ou campanha com orçamento de campanha. Se a campanha usa CBO, o orçamento está na campanha; se é ABO, está no conjunto. Anúncio não tem orçamento.
 - O valor é na moeda da conta (`80` ou `80,50`). O plano mostra o número exato que será enviado. Valores ambíguos como `1.500` são recusados: escreva `1500` ou `1500,00`.
-- Depois de aplicar, o script lê o valor de volta na Meta e só escreve "confirmado na Meta" se bateu. Sem essa linha, confira no Gerenciador.
+- Depois de aplicar, o script lê o valor de volta na Meta e só escreve "confirmado na Meta" se bateu. Sem essa linha, confira com `python3 meta_acoes.py listar` ou lendo pelo MCP da Meta, sem abrir o Gerenciador.
 - Cada mudança fica em `<pasta do projeto>/logs/meta-acoes.jsonl` com um id curto. `desfazer` reverte para o valor anterior (e avisa se alguém mexeu depois).
 
 ## Ao ativar

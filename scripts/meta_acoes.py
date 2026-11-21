@@ -627,7 +627,7 @@ def aplica_plano(ctx, plano, origem, out=print):
         incerto = msg_erro(exc)
     except KeyboardInterrupt:
         mudanca, _ = registrar_seguro(ctx, dict(base, resultado="incerto", erro="interrompido (Ctrl+C)"), out)
-        out("\n⚠️  Interrompido. %s PODE ter sido alterado: confira no Gerenciador antes de repetir. (registro %s)"
+        out("\n⚠️  Interrompido. %s PODE ter sido alterado: confira com `python3 meta_acoes.py listar` (ou peça ao Claude Code/Codex pelo MCP da Meta) antes de repetir. (registro %s)"
             % (plano["rotulo"], mudanca))
         raise
     except RuntimeError as exc:
@@ -642,7 +642,7 @@ def aplica_plano(ctx, plano, origem, out=print):
     except KeyboardInterrupt:
         mudanca, _ = registrar_seguro(ctx, dict(base, resultado="incerto", erro="interrompido (Ctrl+C) na conferência"), out)
         out("\n⚠️  Interrompido na conferência. A Meta já tinha respondido ao pedido: %s provavelmente FOI alterado. "
-            "Confira no Gerenciador. (registro %s)" % (plano["rotulo"], mudanca))
+            "Confira com `python3 meta_acoes.py listar` (ou peça ao Claude Code/Codex pelo MCP da Meta). (registro %s)" % (plano["rotulo"], mudanca))
         raise
     except RuntimeError:
         leu = False
@@ -651,16 +651,16 @@ def aplica_plano(ctx, plano, origem, out=print):
         mudanca, _ = registrar_seguro(ctx, dict(base, resultado="incerto", erro=redige(incerto, ctx.token)), out)
         if leu and atual == plano["antes"]:
             out("⚠️  %s: %s. A leitura logo depois ainda mostra o valor anterior, mas a Meta pode aplicar com atraso: "
-                "confira no Gerenciador antes de repetir. (registro %s)" % (plano["rotulo"], incerto, mudanca))
+                "confira com `python3 meta_acoes.py listar` (ou peça ao Claude Code/Codex pelo MCP da Meta) antes de repetir. (registro %s)" % (plano["rotulo"], incerto, mudanca))
         else:
             out("⚠️  %s: %s e não consegui confirmar o estado lendo de volta. A mudança PODE ter sido aplicada: "
-                "confira no Gerenciador antes de repetir. (registro %s)" % (plano["rotulo"], incerto, mudanca))
+                "confira com `python3 meta_acoes.py listar` (ou peça ao Claude Code/Codex pelo MCP da Meta) antes de repetir. (registro %s)" % (plano["rotulo"], incerto, mudanca))
         return False
     mudanca, gravou = registrar_seguro(ctx, dict(base, resultado="ok", verificado=verificado), out)
     if verificado:
         out("✅ %s: %s (confirmado na Meta · mudança %s)" % (plano["rotulo"], _resumo(plano), mudanca))
     else:
-        out("⚠️  %s: a Meta respondeu sucesso, mas não consegui confirmar o valor lendo de volta. Confira no Gerenciador. (mudança %s)"
+        out("⚠️  %s: a Meta respondeu sucesso, mas não consegui confirmar o valor lendo de volta. Confira com `python3 meta_acoes.py listar` (ou peça ao Claude Code/Codex pelo MCP da Meta). (mudança %s)"
             % (plano["rotulo"], mudanca))
     return verificado and gravou
 

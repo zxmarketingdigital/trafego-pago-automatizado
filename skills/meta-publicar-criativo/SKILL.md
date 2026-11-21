@@ -18,7 +18,7 @@ Transforma o criativo aprovado (arte ou vídeo + copy) em campanha, conjunto e a
 
 ## Fluxo
 
-1. **Reúna o criativo aprovado**: o arquivo (imagem `.jpg/.png` ou vídeo `.mp4/.mov`), a copy final (texto, título, link de destino e botão) e, para vídeo, uma imagem de capa. Se não houver capa, extraia um quadro com `ffmpeg` (disponível nos 3 sistemas). Use a copy exatamente como o aluno aprovou.
+1. **Reúna o criativo aprovado**: o arquivo (imagem `.jpg/.png` ou vídeo `.mp4/.mov`), a copy final (texto, título, link de destino e botão) e, para vídeo, uma imagem de capa. Se não houver capa, extraia um quadro com `ffmpeg` se ele estiver instalado; se não estiver, peça ao aluno uma imagem de capa (não instale nada sem avisar). Use a copy exatamente como o aluno aprovou.
 2. **Pergunte o que faltar**: objetivo (`trafego`, `leads` ou `vendas`), orçamento diário, países, faixa de idade, gênero e interesses.
 3. **Gere o modelo e preencha**: `python3 meta_publicar.py --exemplo > campanha.json` e edite com os dados do aluno (os caminhos dos arquivos são relativos à pasta do `campanha.json`).
 4. **Mostre o resumo sem criar nada**: `python3 meta_publicar.py campanha.json`. Ele valida tudo, resolve os interesses na Meta (só leitura) e imprime conta, projeto, orçamento, público e criativo. Confira com o aluno o cabeçalho `Projeto:` e `Conta:`.

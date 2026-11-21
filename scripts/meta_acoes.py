@@ -487,12 +487,45 @@ def planeja_status(ctx, entidade_id, novo, nivel=None):
             plano["avisos"].append(
                 "%s pai está pausado(a): este item ficará ATIVO mas só entrega quando %s também for ativado(a)." % (pai, pai)
             )
+        if no["nivel"] != "campanha":
+            plano["pais_pausados"] = _pais_pausados(ctx, no)
         gasto = _orcamento_atual(no)
         if gasto:
             plano["avisos"].append(
                 "Ativar começa a gastar: orçamento diário atual %s." % fmt_dinheiro(de_unidades_menores(gasto, ctx.moeda()), ctx.moeda())
             )
     return plano
+
+
+def _pais_pausados(ctx, no):
+    """Pais (conjunto/campanha) com status PAUSED. O effective_status de um item que ele próprio está
+    PAUSED é 'PAUSED' (nunca 'ADSET_PAUSED'), então o pai precisa ser lido de verdade."""
+    achados = []
+    for chave, nivel in (("adset_id", "conjunto"), ("campaign_id", "campanha")):
+        pai_id = str(no.get(chave) or "")
+        if not pai_id or no["nivel"] == nivel:
+            continue
+        try:
+            pai = ctx.api.get(pai_id, {"fields": "id,name,status"}) or {}
+        except RuntimeError:
+            continue  # sem leitura do pai: sem aviso (o aviso é um extra, nunca bloqueia)
+        if str(pai.get("status") or "").upper() == "PAUSED":
+            achados.append({"id": pai_id, "nivel": nivel, "nome": pai.get("name") or ""})
+    return achados
+
+
+def avisa_pais_pausados(planos):
+    """Avisa quando ativar um item cujo pai continua pausado, a menos que o pai também esteja sendo ativado agora."""
+    ativando = {p["id"] for p in planos if p.get("depois") == "ACTIVE" and p.get("campo") == "status"}
+    for p in planos:
+        if p["noop"]:
+            continue
+        for pai in p.get("pais_pausados") or []:
+            if pai["id"] not in ativando:
+                p["avisos"].append(
+                    "%s %s \"%s\" está PAUSADO(A): este item ficará ATIVO mas só entrega quando ele(a) também for ativado(a)."
+                    % (NIVEL_ROTULO[pai["nivel"]].lower(), pai["id"], pai["nome"])
+                )
 
 
 def planeja_orcamento(ctx, entidade_id, valor_texto, nivel=None):
@@ -639,6 +672,7 @@ def _resumo(plano):
 def executa(ctx, planos, confirmar, origem, out=print):
     """Mostra o plano; só aplica com confirmar=True. Devolve o código de saída."""
     ctx.cabecalho(out)
+    avisa_pais_pausados(planos)
     mostra_plano(planos, out)
     pendentes = [p for p in planos if not p["noop"]]
     if not pendentes:
@@ -716,6 +750,11 @@ def historico(ctx, ultimas, out=print):
         out("Nenhuma mudança registrada ainda.")
         return 0
     for r in list(reversed(registros))[:ultimas]:
+        if r.get("acao") == "publicar":
+            ids = r.get("ids") or {}
+            criados = ", ".join("%s=%s" % (k, v) for k, v in ids.items() if k in ("campaign_id", "adset_id", "ad_id"))
+            out("%s  %s  publicar  \"%s\"  %s  [%s]" % (r.get("mudanca"), r.get("quando"), r.get("nome") or "", criados or "nada criado", r.get("resultado")))
+            continue
         plano = {"campo": r.get("campo"), "moeda": r.get("moeda")}
         antes, depois = _fmt_valor(plano, r.get("antes")), _fmt_valor(plano, r.get("depois"))
         extra = " · desfaz %s" % r["desfaz"] if r.get("desfaz") else ""

@@ -430,3 +430,18 @@ class TestTextoDoAluno(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestArquivoIlegivel(Base):
+    def test_arquivo_que_some_na_hora_do_envio_vira_erro_claro_sem_traceback(self):
+        original = self.api.post
+
+        def post(caminho, params, campo_arquivo=None, arquivo=None):
+            if arquivo is not None:
+                raise OSError("permissão negada")
+            return original(caminho, params, campo_arquivo, arquivo)
+
+        self.api.post = post
+        codigo, texto = self.rodar("--confirmar")
+        self.assertEqual(codigo, 1)
+        self.assertIn("Nada foi enviado nesta etapa", texto)

@@ -304,6 +304,8 @@ def _post(ctx, caminho, params, **kw):
         raise meta_acoes.AcaoIncerta("%s. %s." % (meta_acoes.redige(msg_erro(exc), ctx.token), dica))
     except RuntimeError as exc:
         raise AcaoErro(meta_acoes.redige(msg_erro(exc), ctx.token))
+    except OSError as exc:  # só o arquivo local (falha de rede já vira SemResposta): nada foi enviado
+        raise AcaoErro("Não consegui ler o arquivo para enviar (%s). Nada foi enviado nesta etapa." % exc)
     if not isinstance(resposta, dict):
         raise AcaoErro("resposta inesperada da Meta em %s." % caminho)
     return resposta

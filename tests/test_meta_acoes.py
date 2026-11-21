@@ -42,9 +42,14 @@ class FakeApi(object):
         self.cair_depois = False   # aplica a mudança mas a resposta se perde (timeout)
         self.cair_sem_aplicar = False  # a conexão cai e nada é aplicado
 
-    def add(self, nid, nivel, nome, status="ACTIVE", orc=None, conta="111111", effective=None):
+    def add(self, nid, nivel, nome, status="ACTIVE", orc=None, conta="111111", effective=None,
+            campaign_id=None, adset_id=None):
         no = {"id": nid, "name": nome, "status": status, "effective_status": effective or status,
               "account_id": conta, "_nivel": nivel}
+        if campaign_id:
+            no["campaign_id"] = campaign_id
+        if adset_id:
+            no["adset_id"] = adset_id
         if orc is not None:
             no["daily_budget"] = str(orc)
         self.nos[nid] = no
@@ -377,6 +382,9 @@ class TestOutrosBordas(Base):
             def read(self):
                 raise http.client.IncompleteRead(b"x")
 
+            def close(self):
+                pass
+
         api = meta_acoes.GraphApi("EAAtoken_secreto_123")
         erro = HTTPError("u", 500, "x", {}, Corpo())
         with mock.patch.object(meta_acoes, "urlopen", side_effect=erro):
@@ -568,3 +576,47 @@ class TestTextoDoAluno(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPaiPausado(Base):
+    """Na Meta, item com status PAUSED tem effective_status PAUSED (nunca ADSET_PAUSED): o pai tem de ser lido."""
+
+    def setUp(self):
+        Base.setUp(self)
+        self.api.add("120000000000401", "campanha", "Camp nova", "PAUSED")
+        self.api.add("120000000000402", "conjunto", "Conj novo", "PAUSED", orc=3000, campaign_id="120000000000401")
+        self.api.add("120000000000403", "anuncio", "Anuncio novo", "PAUSED",
+                     campaign_id="120000000000401", adset_id="120000000000402")
+
+    def test_ativar_so_o_anuncio_avisa_que_conjunto_e_campanha_seguem_pausados(self):
+        codigo, texto = self.rodar("ativar", "120000000000403")
+        self.assertEqual(codigo, 0)
+        self.assertIn("conjunto 120000000000402", texto)
+        self.assertIn("campanha 120000000000401", texto)
+        self.assertIn("PAUSADO", texto)
+        self.assertEqual(self.api.posts, [])
+
+    def test_ativar_os_tres_juntos_nao_repete_o_aviso(self):
+        codigo, texto = self.rodar("ativar", "120000000000401", "120000000000402", "120000000000403")
+        self.assertEqual(codigo, 0)
+        self.assertNotIn("só entrega quando", texto)
+
+    def test_pai_ativo_nao_gera_aviso(self):
+        self.api.nos["120000000000401"]["status"] = "ACTIVE"
+        self.api.nos["120000000000402"]["status"] = "ACTIVE"
+        codigo, texto = self.rodar("ativar", "120000000000403")
+        self.assertEqual(codigo, 0)
+        self.assertNotIn("só entrega quando", texto)
+
+
+class TestHistoricoPublicacao(Base):
+    def test_historico_mostra_os_ids_publicados(self):
+        meta_acoes.registrar(
+            meta_acoes.montar_contexto(api=self.api, paths=self.paths),
+            {"acao": "publicar", "nome": "Camp X", "resultado": "ok",
+             "ids": {"campaign_id": "11", "adset_id": "22", "ad_id": "44", "image_hash": "h"}})
+        codigo, texto = self.rodar("historico")
+        self.assertEqual(codigo, 0)
+        self.assertIn("publicar", texto)
+        self.assertIn("campaign_id=11", texto)
+        self.assertNotIn("None", texto)

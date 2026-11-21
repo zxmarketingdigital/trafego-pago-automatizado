@@ -518,7 +518,7 @@ Setup 6 concluido!
 
 O que voce tem agora:
 - MCP oficial Meta conectado a conta {ad_account_id}
-- 9 skills instaladas (8 especialistas + 1 agente orquestrador)
+- 11 skills instaladas (10 especialistas + 1 agente orquestrador)
 - Dashboard rodando em http://localhost:8888 (atualiza 8h/13h/19h)
 - Estrategia decide() ativa nos KPIs: {kpis_lista}
 - Metas configuradas: {metas_resumo}

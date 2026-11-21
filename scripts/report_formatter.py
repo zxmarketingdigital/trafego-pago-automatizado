@@ -171,7 +171,9 @@ def _api_note(base: Path) -> str:
         # A data da checagem vai no texto: se o agendamento parar, o aviso não parece mais novo do que é.
         checked = str(status.get("checked_at") or "")[:10]
         when = " (checagem de %s)" % checked if checked else ""
-        return label + when + ": " + first + " Rode: python3 scripts/check_api_version.py"
+        # A ação vem antes do detalhe: o WhatsApp corta o aviso em ~210 caracteres e, com
+        # "dado defasado" junto, é o detalhe (não a ação) que deve ser cortado.
+        return label + when + ": rode python3 scripts/check_api_version.py. " + first
     except Exception:  # noqa: BLE001
         return ""
 

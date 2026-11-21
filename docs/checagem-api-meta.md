@@ -18,8 +18,8 @@ Não há tabela de datas de expiração dentro do script: a fonte do aviso é a 
 | `ok` | A Meta serviu a versão pedida e não avisou nada. | Nada. |
 | `atencao` | A Meta mandou aviso de descontinuação, ou há uma data de encerramento (`Sunset`) em até 60 dias. | Peça ao Claude Code ou ao Codex: "atualizar a versão da API Meta nos scripts". |
 | `critico` | A Meta serviu uma versão diferente da pedida (a pedida já foi encerrada) ou a data de encerramento já passou. | Atualize a versão agora e rode o fetch de novo. |
-| `erro` | Token recusado ou falha na chamada. | `python3 setup/setup_meta_oauth.py --renew`. |
-| `nao_verificado` | Sem token ou sem rede. | Configure o token (Etapa 1) e rode de novo. |
+| `erro` | Token recusado, sem rede ou falha na chamada. | `python3 setup/setup_meta_oauth.py --renew`. |
+| `nao_verificado` | Sem token ou sem a versão da Graph API nos scripts do projeto. | Configure o token (Etapa 1) ou instale os scripts (Etapa 4) e rode de novo. |
 
 `ok` quer dizer que **hoje** a API não avisou nada; não é garantia de que a versão não vai encerrar. Por isso a checagem é semanal.
 

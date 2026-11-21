@@ -7,7 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
@@ -394,6 +394,18 @@ class ReportIntegrationTest(unittest.TestCase):
             report = assemble_report(7, operation_dir=base, now=NOW)
             self.assertIn("API META", report["warning"])
             self.assertIn("API META", render_whatsapp(report))
+
+    def test_whatsapp_keeps_the_action_even_with_stale_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._report_dir(tmp, {"status": "critico", "checked_at": "2026-11-20T09:00:00-03:00",
+                                          "mensagens": ["A Meta respondeu com a versão v22.0, mas o sistema pediu v21.0: " * 3]})
+            path = base / "dashboards" / "paid-traffic-7d.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["generated_at"] = (NOW - timedelta(hours=40)).isoformat()
+            path.write_text(json.dumps(data), encoding="utf-8")
+            text = render_whatsapp(assemble_report(7, operation_dir=base, now=NOW))
+            self.assertIn("DADO DEFASADO", text)
+            self.assertIn("check_api_version.py", text)  # o WhatsApp corta o aviso: a ação não pode ser o que some
 
     def test_malformed_messages_field_never_breaks_the_report(self):
         for bad in ({"x": 1}, 5, "texto", [None]):

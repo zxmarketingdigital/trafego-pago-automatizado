@@ -82,6 +82,8 @@
   .badge.KEEP  { background: rgba(245,158,11,.15); color: var(--yellow);border: 1px solid var(--yellow);}
   .badge.KEEP-amostra { background: #1f2937; color: var(--gray); border: 1px solid var(--border); }
 
+  .api-banner { margin: 14px 40px 0; padding: 10px 14px; border-radius: 8px; font-size: 13px; border: 1px solid var(--yellow); background: rgba(245,158,11,.12); color: var(--yellow); }
+  .api-banner.critico { border-color: var(--red); background: rgba(239,68,68,.12); color: var(--red); }
   .empty { text-align: center; padding: 60px; color: var(--muted); }
 </style>
 </head>
@@ -93,6 +95,8 @@
   </div>
   <div class="meta" id="account"></div>
 </header>
+
+<div class="api-banner" id="apiBanner" hidden></div>
 
 <nav class="tabs" id="tabs"></nav>
 
@@ -122,6 +126,18 @@
   const primary = data.primary_kpi;
   const primaryMeta = (data.kpis_summary[primary] || {});
   document.getElementById('primaryHint').textContent = `KPI primário: ${primary.toUpperCase()} (meta ${formatTarget(primary, primaryMeta.target)})`;
+
+  // Aviso da checagem semanal da API Meta (scripts/check_api_version.py grava api-status.json)
+  try {
+    fetch('api-status.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then(st => {
+      if (!st || (st.status !== 'atencao' && st.status !== 'critico')) return;
+      const box = document.getElementById('apiBanner');
+      box.textContent = 'API da Meta: ' + ((st.mensagens && st.mensagens[0]) || 'a Meta avisou sobre a versão da API.') +
+        ' Rode: python3 scripts/check_api_version.py';
+      box.className = 'api-banner' + (st.status === 'critico' ? ' critico' : '');
+      box.hidden = false;
+    }).catch(() => {});
+  } catch (e) { /* aberto como arquivo: sem aviso */ }
 
   // Tabs (links para os outros windows)
   const winList = [4, 7, 14, 30];
@@ -165,7 +181,7 @@
       <summary>
         <span class="badge ${c.decide}">${c.decide}</span>
         <b>${escapeHtml(c.name)}</b>
-        <span style="color:var(--muted)">· ${c.objective || ''}</span>
+        <span style="color:var(--muted)">· ${escapeHtml(c.objective || '')}</span>
         <span style="float:right">${CUR}${c.spend.toFixed(2)} · ${metricsCells}</span>
       </summary>
       <div class="nested">${adsetsHtml}</div>

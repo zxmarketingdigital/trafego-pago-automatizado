@@ -58,6 +58,8 @@ zx-control-trafego-pago/
 /meta-metrics-fetcher       atualizar dashboard agora
 /meta-performance-analyzer  análise da semana
 /meta-budget-optimizer      plano de realocação
+/meta-api-checagem          checar se a API da Meta vai expirar
+/meta-dashboard-agencia     painel de todos os clientes
 ```
 
 Bônus de ação na Meta (instalação opcional, veja a seção abaixo):
@@ -96,6 +98,14 @@ python3 meta_publicar.py campanha.json --confirmar # cria campanha, conjunto e a
 - **O que é publicado nasce PAUSADO.** Ativar é outro comando com confirmação (`meta_acoes.py ativar ... --confirmar`).
 - `meta_publicar.py` cobre objetivos tráfego, leads e vendas (site, com pixel), imagem ou vídeo. Formulário instantâneo, mensagens/WhatsApp, carrossel e catálogo ficam com a skill `meta-campaign-launcher`. Os payloads foram testados com a rede simulada; se a sua conta pedir campos novos da Graph API, acrescente-os em `campanha_extra`, `conjunto_extra`, `targeting_extra` ou `criativo_extra` no `campanha.json` (aparecem no resumo; não podem trocar status, orçamento, público, objetivo ou página). Interesse que não bate exatamente com o nome pedido é marcado APROXIMADO e só é criado com `--aceitar-aproximado`. Se uma chamada terminar sem resposta, o item pode ter sido criado ou alterado: o comando lê de volta quando consegue e, quando não, registra como incerto e manda conferir no Gerenciador.
 - A variável `ZX_TPA_VIDEO_TIMEOUT` (padrão 600 s) controla quanto esperar a Meta processar o vídeo.
+
+## Operação avançada: VPS, API da Meta e painel de agência
+
+Funciona igual no Claude Code e no Codex, em macOS, Windows e Linux.
+
+- **Rodar numa VPS Ubuntu e ver o dashboard no celular com login:** [docs/vps.md](docs/vps.md). O dashboard nunca fica numa porta aberta sem autenticação (túnel Cloudflare com Access, senha com HTTPS ou túnel SSH).
+- **Checagem semanal da API da Meta:** `python3 scripts/check_api_version.py` descobre a versão da Graph API em uso, faz uma chamada de leitura e lê os avisos de descontinuação que a própria Meta envia. O resultado vira uma faixa no dashboard e uma linha no relatório diário. Como agendar (cron, launchd, Agendador de Tarefas): [docs/checagem-api-meta.md](docs/checagem-api-meta.md). Peça ao Claude: "checar a versão da API da Meta".
+- **Painel de todos os clientes (agência):** `python3 scripts/dashboard_agencia.py` soma gasto, resultado, custo por resultado, CPA e ROAS de cada projeto, com total por moeda (`--saida html` gera a página, `--servir` abre em `http://127.0.0.1:8887`, `--atualizar` roda o coletor de cada projeto antes). Peça ao Claude: "painel de todos os clientes".
 
 ## Limitações conhecidas
 

@@ -28,6 +28,13 @@ def find_template():
     return None
 
 
+def _json_for_script(data):
+    """JSON seguro para ir DENTRO de <script>: nome de campanha/anúncio vem da Meta (terceiro) e não pode
+    fechar a tag nem abrir HTML. \\u003c/\\u003e/\\u0026 continuam sendo o mesmo texto para o JavaScript."""
+    return (json.dumps(data, ensure_ascii=False)
+            .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"))
+
+
 def main():
     tpl = find_template()
     if not tpl:
@@ -54,7 +61,7 @@ def main():
         days = data["window_days"]
         html = template.replace(
             "/*__JSON_DATA__*/",
-            f"window.PAID_TRAFFIC_DATA = {json.dumps(data, ensure_ascii=False)};"
+            f"window.PAID_TRAFFIC_DATA = {_json_for_script(data)};"
         ).replace(
             "<!--__GENERATED_AT__-->",
             f"Atualizado: {data.get('generated_at', '')}"

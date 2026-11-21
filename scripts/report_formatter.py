@@ -151,6 +151,31 @@ def _iter_ads(campaign: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
                 yield ad
 
 
+API_STATUS_FILE = "api-status.json"  # gravado por scripts/check_api_version.py
+
+
+def _api_note(base: Path) -> str:
+    """Aviso curto quando a checagem semanal da API Meta pediu atenção. Vazio se tudo ok
+    ou se a checagem nunca rodou (o relatório não depende dela). Qualquer problema neste
+    arquivo opcional é ignorado: ele nunca derruba o relatório."""
+    try:
+        status = _read_json(base / "dashboards" / API_STATUS_FILE)
+        if status.get("status") not in ("atencao", "critico"):
+            return ""
+        messages = status.get("mensagens")
+        messages = messages if isinstance(messages, list) else []
+        first = str(messages[0]) if messages else "a Meta avisou sobre a versão da API"
+        if len(first) > 150:
+            first = first[:149].rstrip() + "…"
+        label = "API META URGENTE" if status.get("status") == "critico" else "API META"
+        # A data da checagem vai no texto: se o agendamento parar, o aviso não parece mais novo do que é.
+        checked = str(status.get("checked_at") or "")[:10]
+        when = " (checagem de %s)" % checked if checked else ""
+        return label + when + ": " + first + " Rode: python3 scripts/check_api_version.py"
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def _empty_report(window: int, source: Path, reason: str) -> Dict[str, Any]:
     return {
         "available": False,
@@ -244,6 +269,10 @@ def assemble_report(
             + detail
             + ". O coletor pode ter falhado; confira antes de decidir."
         )
+
+    api_note = _api_note(base)
+    if api_note:
+        warning = (warning + " " + api_note).strip()
 
     kpi_meta = {
         item.get("key"): item

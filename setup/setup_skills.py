@@ -40,6 +40,8 @@ EXPECTED = [
     # Bônus de ação (opt-in: setup/setup_acoes_meta.py instala os scripts).
     "meta-acoes-campanha",
     "meta-publicar-criativo",
+    "meta-api-checagem",
+    "meta-dashboard-agencia",
 ]
 
 

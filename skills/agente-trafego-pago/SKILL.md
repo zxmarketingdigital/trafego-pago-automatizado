@@ -45,6 +45,8 @@ Escolha uma opção:
  11. Receber o relatório diário no WhatsApp
  12. Pausar, ativar ou ajustar orçamento (com confirmação)
  13. Publicar o criativo aprovado (nasce pausado)
+ 14. Checar a versão da API da Meta (aviso de expiração)
+ 15. Painel de todos os clientes (versão agência)
 ```
 
 ## Roteamento
@@ -62,6 +64,8 @@ Escolha uma opção:
 | 11 | Invocar skill `meta-relatorio-whatsapp` |
 | 12 | Invocar skill `meta-acoes-campanha` |
 | 13 | Invocar skill `meta-publicar-criativo` |
+| 14 | Invocar skill `meta-api-checagem` |
+| 15 | Invocar skill `meta-dashboard-agencia` |
 | 7 | Rodar `python3 ~/zx-control-trafego-pago/setup/setup_perfil_campanhas.py` para regravar `meta_perfil.json` |
 | 8 | Ler `paid-traffic-7d.json`, formatar `kpis_summary` em tabela com status verde/amarelo/vermelho |
 

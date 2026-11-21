@@ -26,13 +26,16 @@ A partir daí o setup é guiado — 10 etapas, cada uma com explicação + execu
 ## O que será instalado
 
 - **MCP oficial Meta** conectado via OAuth
-- **5 skills + 1 agente orquestrador** em `~/.claude/skills/`:
+- **12 skills + 1 agente orquestrador** em `~/.claude/skills/`:
   - `agente-trafego-pago` (orquestrador)
   - `meta-campaign-launcher`
   - `meta-creative-brief`
   - `meta-metrics-fetcher`
   - `meta-performance-analyzer`
   - `meta-budget-optimizer`
+  - `meta-capi-setup`, `meta-relatorio-email`, `meta-relatorio-whatsapp` (bônus)
+  - `meta-acoes-campanha`, `meta-publicar-criativo` (bônus de ação)
+  - `meta-api-checagem`, `meta-dashboard-agencia` (operação avançada)
 - **Perfil de campanhas personalizado** (`~/.operacao-ia/config/meta_perfil.json`, ou a pasta do projeto do cliente) — métricas, metas e estratégia decide() escolhidas pelo aluno
 - **Dashboard local** em `http://localhost:8888` com KPIs do perfil (um por projeto/cliente, cada um na sua porta)
 - **2 LaunchAgents** (macOS) ou **2 tarefas no Agendador de Tarefas** (Windows) — fetch 3x/dia + dashboard server keep-alive

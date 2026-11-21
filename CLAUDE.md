@@ -7,7 +7,7 @@
 >
 > Ao final desta sessão você terá:
 > - MCP oficial do Meta conectado (criar campanhas, ler insights e ajustar budget direto pelo chat)
-> - 8 skills especialistas + 1 agente orquestrador para tráfego pago
+> - 12 skills especialistas + 1 agente orquestrador para tráfego pago
 > - Dashboard local com SUAS métricas e SUAS metas, atualizando 3x/dia automaticamente
 > - Estratégia de decisão (escalar/matar/manter) personalizada para o seu modelo de campanha
 >
@@ -183,7 +183,7 @@ Pronto para a Etapa 3?"
 `[███░░░░░░░] Etapa 3 de 10`
 
 ### O que e
-Copia 8 skills especialistas + 1 agente orquestrador para `~/.claude/skills/`.
+Copia 12 skills especialistas + 1 agente orquestrador para `~/.claude/skills/`.
 
 ### Para que serve
 Habilita comandos diretos no chat: criar campanha, gerar briefing, atualizar metricas, analisar performance, otimizar budget.
@@ -198,12 +198,12 @@ Voce digita o trigger no chat (ex: "criar campanha de lead") e a skill correta e
 Execute: `python3 setup/setup_skills.py`
 
 O script vai:
-- Copiar 11 pastas de `skills/` (9 do setup + 2 bônus de ação) para `~/.claude/skills/`
-- Validar com `ls ~/.claude/skills/ | grep -E "meta-|agente-trafego"` (deve retornar 11)
+- Copiar 13 pastas de `skills/` (9 do setup + 2 bônus de ação + 2 de operação avançada) para `~/.claude/skills/`
+- Validar com `ls ~/.claude/skills/ | grep -E "meta-|agente-trafego"` (deve retornar 13)
 
 Apos o script:
 
-"9 skills instaladas:
+"13 skills instaladas:
 
 /agente-trafego-pago        menu orquestrador
 /meta-campaign-launcher     criar campanhas
@@ -216,6 +216,8 @@ Apos o script:
 /meta-relatorio-whatsapp    relatório diário no WhatsApp (bônus)
 /meta-acoes-campanha        pausar/ativar/orçamento com confirmação (bônus)
 /meta-publicar-criativo     publicar criativo aprovado, nasce pausado (bônus)
+/meta-api-checagem          checar a versão da API da Meta (bônus)
+/meta-dashboard-agencia     painel de todos os clientes (bônus)
 
 Pronto para a Etapa 4?"
 
@@ -518,7 +520,7 @@ Setup 6 concluido!
 
 O que voce tem agora:
 - MCP oficial Meta conectado a conta {ad_account_id}
-- 11 skills instaladas (10 especialistas + 1 agente orquestrador)
+- 13 skills instaladas (12 especialistas + 1 agente orquestrador)
 - Dashboard rodando em http://localhost:8888 (atualiza 8h/13h/19h)
 - Estrategia decide() ativa nos KPIs: {kpis_lista}
 - Metas configuradas: {metas_resumo}

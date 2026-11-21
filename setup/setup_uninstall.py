@@ -52,8 +52,13 @@ SKILLS = [
     "meta-metrics-fetcher",
     "meta-performance-analyzer",
     "meta-budget-optimizer",
+    "meta-capi-setup",
+    "meta-relatorio-email",
+    "meta-relatorio-whatsapp",
     "meta-acoes-campanha",
     "meta-publicar-criativo",
+    "meta-api-checagem",
+    "meta-dashboard-agencia",
 ]
 
 

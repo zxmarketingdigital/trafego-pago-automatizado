@@ -360,7 +360,7 @@ def render_text(rows, totals, window):
             notes.append("dado defasado (+26h)")
         if r["atualizacao_falhou"]:
             notes.append("atualização falhou (dado de %s)" % (r["gerado_em"] or "data desconhecida"))
-        if r["api_status"] in ("atencao", "critico"):
+        if r["api_status"] in ("atencao", "critico", "erro", "nao_verificado"):
             notes.append("API Meta: %s" % r["api_status"])
         lines.append("%-16s %-14s %-24s %-14s %-12s %-8s %s" % (
             r["projeto"], _money(r["gasto"], r["moeda"]), _result_cell(r),
@@ -424,7 +424,7 @@ def render_html(rows, totals, window, now=None):
             gen += ' <span class="warn">defasado (+26h)</span>'
         if r["atualizacao_falhou"]:
             gen += ' <span class="err">atualização falhou</span>'
-        api = API_ICON.get(r["api_status"], "—") if isinstance(r["api_status"], str) else "—"
+        api = ("%s %s" % (API_ICON[r["api_status"]], esc(r["api_status"]))) if r["api_status"] in API_ICON else "—"
         out.append(
             "<tr><td><span class=\"dot %s\"></span>%s</td><td>%s</td><td class=\"n\">%s</td><td>%s</td>"
             "<td class=\"n\">%s</td><td class=\"n\">%s</td><td class=\"n\">%s</td><td>%s</td><td>%s</td></tr>" % (

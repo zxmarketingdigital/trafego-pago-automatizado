@@ -156,10 +156,17 @@ API_STATUS_FILE = "api-status.json"  # gravado por scripts/check_api_version.py
 
 def _api_note(base: Path) -> str:
     """Aviso curto quando a checagem semanal da API Meta pediu atenção. Vazio se tudo ok
-    ou se a checagem nunca rodou (o relatório não depende dela). Qualquer problema neste
-    arquivo opcional é ignorado: ele nunca derruba o relatório."""
+    ou se a checagem nunca rodou (o relatório não depende dela). Arquivo existente e ilegível
+    vira um aviso para refazer a checagem. Nada aqui derruba o relatório."""
+    path = base / "dashboards" / API_STATUS_FILE
     try:
-        status = _read_json(base / "dashboards" / API_STATUS_FILE)
+        status = _read_json(path)
+    except FileNotFoundError:
+        return ""  # a checagem nunca rodou: o relatório não depende dela
+    except Exception:  # noqa: BLE001
+        # Existe mas não dá para ler (escrita interrompida): o aviso anterior pode ter sumido junto.
+        return "API META: o arquivo da checagem está ilegível, rode python3 scripts/check_api_version.py."
+    try:
         if status.get("status") not in ("atencao", "critico"):
             return ""
         messages = status.get("mensagens")
@@ -176,6 +183,14 @@ def _api_note(base: Path) -> str:
         return label + when + ": rode python3 scripts/check_api_version.py. " + first
     except Exception:  # noqa: BLE001
         return ""
+
+
+def _with_api_note(report: Dict[str, Any], base: Path) -> Dict[str, Any]:
+    """Relatório sem dados também leva o aviso da API: é justo quando a coleta quebra que ele importa."""
+    note = _api_note(base)
+    if note:
+        report["warning"] = (str(report.get("warning") or "") + " " + note).strip()
+    return report
 
 
 def _empty_report(window: int, source: Path, reason: str) -> Dict[str, Any]:
@@ -228,29 +243,29 @@ def assemble_report(
         raise
     source = base / "dashboards" / f"paid-traffic-{selected_window}d.json"
     if profile_error:
-        return _empty_report(selected_window, source, profile_error)
+        return _with_api_note(_empty_report(selected_window, source, profile_error), base)
 
     try:
         payload = _read_json(source)
     except FileNotFoundError:
-        return _empty_report(
+        return _with_api_note(_empty_report(
             selected_window,
             source,
             f"{source} não existe. Rode o coletor antes do relatório.",
-        )
+        ), base)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        return _empty_report(
+        return _with_api_note(_empty_report(
             selected_window,
             source,
             f"{source} está inválido ou ilegível ({exc}).",
-        )
+        ), base)
 
     generated_error = ""
     try:
         generated_at = _parse_generated_at(payload.get("generated_at"))
     except ValueError as exc:
         generated_at = None
-        generated_error = f"generated_at inválido ({exc})"
+        generated_error = "generated_at inválido (%s)" % str(exc)[:60]
 
     reference_now = now or datetime.now(timezone.utc)
     if reference_now.tzinfo is None:

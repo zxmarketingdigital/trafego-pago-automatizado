@@ -233,12 +233,13 @@ def analyze_response(requested, status, headers, body, now=None, dias=None):
     if isinstance(error, dict):
         text = str(error.get("message") or "")
         lowered = text.lower()
-        if "deprecat" in lowered or "no longer" in lowered or error.get("code") == 2635:
-            bump("critico")
-            msgs.append("A Meta devolveu erro de versão depreciada: %s" % text[:200])
-        elif status in (401, 403) or error.get("code") == 190:
+        token_error = (status in (401, 403) or error.get("code") == 190) and error.get("code") != 2635
+        if token_error:  # token expirado pode citar "no longer": não é versão encerrada
             bump("erro")
             msgs.append("A Meta recusou o token (%s). Renove com: python3 setup/setup_meta_oauth.py --renew" % (text[:120] or status))
+        elif "deprecat" in lowered or "no longer" in lowered or error.get("code") == 2635:
+            bump("critico")
+            msgs.append("A Meta devolveu erro de versão depreciada: %s" % text[:200])
         else:
             bump("erro")
             msgs.append("A Meta devolveu erro %s: %s" % (error.get("code") or status, text[:160]))

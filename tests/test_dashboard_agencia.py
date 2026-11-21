@@ -78,6 +78,14 @@ class CollectTest(unittest.TestCase):
             fresh = _make(Path(tmp) / "b", "default", "cpl", "BRL", 10, {"leads": 1})
             self.assertFalse(da.collect_client("default", fresh, 7, now=NOW)["defasado"])
 
+    def test_api_error_status_is_visible_in_text_and_html(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = _make(Path(tmp), "default", "cpl", "BRL", 10, {"leads": 1}, api="erro")
+            row = da.collect_client("default", p, 7, now=NOW)
+            totals = da.build_totals([row])
+            self.assertIn("API Meta: erro", da.render_text([row], totals, 7))
+            self.assertIn("erro", da.render_html([row], totals, 7).split("API Meta</th>", 1)[1])
+
 
 class RobustnessTest(unittest.TestCase):
     def _raw(self, tmp, payload):

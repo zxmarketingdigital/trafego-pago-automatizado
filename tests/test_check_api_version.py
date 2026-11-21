@@ -350,6 +350,12 @@ class PassFourTest(unittest.TestCase):
                 tpa_paths.active_paths, cav.check_project = old_active, old_check
             self.assertEqual(code, 3)
 
+    def test_expired_token_mentioning_no_longer_is_an_error_not_a_dead_version(self):
+        body = json.dumps({"error": {"code": 190, "message": "Session is no longer valid"}})
+        level, msgs, _rel = cav.analyze_response("v21.0", 400, {}, body, now=NOW)
+        self.assertEqual(level, "erro")
+        self.assertIn("setup_meta_oauth.py --renew", msgs[0])
+
     def test_redirect_is_not_followed_and_is_reported_as_error(self):
         self.assertIsNone(cav._NoRedirect().redirect_request(None, None, 302, "Found", {}, "https://outro.example/x"))
         level, msgs, _rel = cav.analyze_response("v21.0", 302, {"location": "https://outro.example/"}, "", now=NOW)
@@ -425,7 +431,26 @@ class ReportIntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = self._report_dir(tmp, None)
             (base / "dashboards" / "api-status.json").write_text("{quebrado", encoding="utf-8")
-            self.assertEqual(assemble_report(7, operation_dir=base, now=NOW)["warning"], "")
+            warning = assemble_report(7, operation_dir=base, now=NOW)["warning"]
+            self.assertIn("ilegível", warning)  # arquivo existente e quebrado não some em silêncio
+            self.assertIn("check_api_version.py", warning)
+
+    def test_unavailable_report_still_carries_the_api_warning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._report_dir(tmp, {"status": "critico", "mensagens": ["versão encerrada"]})
+            (base / "dashboards" / "paid-traffic-7d.json").unlink()
+            report = assemble_report(7, operation_dir=base, now=NOW)
+            self.assertFalse(report["available"])
+            self.assertIn("API META URGENTE", report["warning"])
+
+    def test_long_generated_at_error_cannot_push_the_api_action_out_of_whatsapp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._report_dir(tmp, {"status": "atencao", "mensagens": ["aviso"]})
+            path = base / "dashboards" / "paid-traffic-7d.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["generated_at"] = "x" * 300
+            path.write_text(json.dumps(data), encoding="utf-8")
+            self.assertIn("check_api_version.py", render_whatsapp(assemble_report(7, operation_dir=base, now=NOW)))
 
 
 if __name__ == "__main__":
